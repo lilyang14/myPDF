@@ -16,8 +16,8 @@
     :root{
       --bg:#1C1C1C;
       --overlay-bg: rgba(0,0,0,0.6);
-      --progress-color: #4CAF50;
-      --progress-bg: rgba(255, 255, 255, 0.15);
+      --image-placeholder: #2a2a2a; /* 图片加载占位背景 */
+      --image-error: #4a2a2a; /* 图片加载失败背景 */
     }
     html,body{
       height:100%;
@@ -26,25 +26,34 @@
       color:#fff;
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
-      user-select:none;
+      user-select:none; /* 禁止选中文本 */
     }
 
+    /* 整体容器：顶部留 60px 空间 */
     .wrap{
       padding-top:60px;
       box-sizing:border-box;
       min-height:100vh;
     }
 
+    /* 画廊容器：单列垂直排列，居中，桌面宽度 65%，最大 1200px */
     .gallery{
       width:100%;
       max-width:1200px;
       margin:0 auto;
       box-sizing:border-box;
-      display: none;
-      opacity: 0;
-      transition: opacity 0.8s ease-out;
+      /* 桌面占比 65%：通过媒体查询实现响应 */
     }
 
+    /* 图片容器：用于处理加载状态 */
+    .image-container {
+      position: relative;
+      width: 100%;
+      background: var(--image-placeholder);
+      overflow: hidden;
+    }
+
+    /* 图片样式：宽度按容器 100%，高按比例自适应；添加过渡效果 */
     .gallery img{
       width:100%;
       height:auto;
@@ -52,10 +61,53 @@
       margin:0;
       padding:0;
       border:0;
-      -webkit-user-drag:none;
+      -webkit-user-drag:none; /* 禁止拖拽 */
       user-drag:none;
+      opacity: 0; /* 初始透明 */
+      transform: scale(0.98); /* 初始轻微缩放 */
+      transition: opacity 0.6s ease-out, transform 0.6s ease-out; /* 平滑过渡 */
     }
 
+    /* 图片加载完成状态 */
+    .gallery img.loaded {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* 图片加载失败状态 */
+    .gallery img.error {
+      background: var(--image-error);
+    }
+
+    /* 加载指示器：轻微的背景动画 */
+    .image-container::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(
+        to right,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,0.05) 100%
+      );
+      animation: shimmer 1.5s infinite;
+      pointer-events: none;
+    }
+
+    @keyframes shimmer {
+      100% {
+        left: 100%;
+      }
+    }
+
+    /* 图片加载完成后隐藏加载指示器 */
+    .image-container.loaded::after {
+      display: none;
+    }
+
+    /* 网络异常提示覆盖层 */
     .overlay {
       position:fixed;
       inset:0;
@@ -91,79 +143,22 @@
       width:96px;
       height:36px;
       border-radius:4px;
-      background: rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.2); /* 白色 20% 透明度 */
       color:#FFFFFF;
       font-size:14px;
       border: none;
       cursor:pointer;
     }
 
-    .loading-container {
-      position: fixed;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: var(--bg);
-      z-index: 9998;
-      transition: opacity 1.2s ease-out;
-    }
-
-    .progress-ring {
-      width: 150px;
-      height: 150px;
-      position: relative;
-      margin-bottom: 30px;
-    }
-
-    .progress-ring-circle {
-      stroke: var(--progress-color);
-      stroke-width: 8;
-      fill: transparent;
-      stroke-linecap: round;
-      transform: rotate(-90deg);
-      transform-origin: 50% 50%;
-      transition: stroke-dashoffset 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .progress-ring-background {
-      stroke: var(--progress-bg);
-      stroke-width: 8;
-      fill: transparent;
-    }
-
-    .progress-text {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      font-size: 22px;
-      font-weight: 600;
-      transition: all 0.5s ease;
-    }
-
-    .progress-percentage {
-      margin-top: 10px;
-      font-size: 28px;
-      font-weight: 700;
-      color: var(--progress-color);
-      transition: all 0.3s ease;
-    }
-
-    .loading-status {
-      margin-top: 15px;
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.6);
-      transition: all 0.3s ease;
-    }
-
+    /* 响应式：桌面视口宽度 >= 900px 时，容器为窗口的 65% */
     @media(min-width:900px){
       .gallery{
         width:65vw;
         max-width:1200px;
       }
     }
+
+    /* 移动端：图片已在容器 100%，viewport 会保证屏幕宽度 */
   </style>
 </head>
 <body>
@@ -171,18 +166,7 @@
     <main class="gallery" id="gallery" aria-live="polite"></main>
   </div>
 
-  <div class="loading-container" id="loadingContainer">
-    <div class="progress-ring">
-      <svg width="150" height="150">
-        <circle class="progress-ring-background" cx="75" cy="75" r="60"></circle>
-        <circle class="progress-ring-circle" cx="75" cy="75" r="60" stroke-dasharray="376.99" stroke-dashoffset="376.99"></circle>
-      </svg>
-      <div class="progress-text">准备中</div>
-    </div>
-    <div class="progress-percentage" id="progressPercentage">0%</div>
-    <div class="loading-status" id="loadingStatus">初始化加载程序...</div>
-  </div>
-
+  <!-- 网络异常覆盖 -->
   <div class="overlay" id="overlay" role="alertdialog" aria-hidden="true">
     <div class="card">
       <h2 id="overlay-msg">网络异常，请重新加载</h2>
@@ -195,112 +179,33 @@
 
   <script>
     (function(){
+      // 配置
       const gallery = document.getElementById('gallery');
       const overlay = document.getElementById('overlay');
       const reloadBtn = document.getElementById('reloadBtn');
-      const loadingContainer = document.getElementById('loadingContainer');
-      const progressCircle = document.querySelector('.progress-ring-circle');
-      const progressPercentage = document.getElementById('progressPercentage');
-      const progressText = document.querySelector('.progress-text');
-      const loadingStatus = document.getElementById('loadingStatus');
-      
-      const circleRadius = 60;
-      const circleCircumference = 2 * Math.PI * circleRadius;
-      progressCircle.style.strokeDasharray = circleCircumference;
-      progressCircle.style.strokeDashoffset = circleCircumference;
 
+      // 尝试的最大编号上限（安全界限，避免无限尝试）
       const ABSOLUTE_MAX = 5000;
+
+      // 当连续这个数目的索引都不存在时，认为目录扫描结束
       const CONSECUTIVE_FAILURES_TO_STOP = 6;
+
+      // 尝试的扩展名顺序（优先 png，再 jpg/jpeg）
       const exts = ['.png', '.jpg', '.jpeg', '.webp'];
-      const MIN_LOADING_DURATION = 2500;
-      const PROGRESS_UPDATE_INTERVAL = 50;
 
-      let loadingStartTime = 0;
-      let totalImages = 0;
-      let loadedImages = 0;
-      let imageSources = [];
-      let currentPercent = 0;
-      let targetPercent = 0;
-      let progressIntervalId = null;
-      let scanIndex = 1;
+      let index = 1;
+      let consecutiveFailures = 0;
+      let loadedCount = 0;
 
-      // 准备阶段配置
-      const PREPARE_PHASE_TARGET = 20; // 准备阶段目标进度（0%→20%）
-      const PREPARE_PHASE_DURATION = 1200; // 准备阶段动画时长（1.2秒）
-
+      // 刷新后自动回到顶部
       window.addEventListener('load', () => window.scrollTo(0,0), {once:true});
 
+      // 重载按钮
       reloadBtn.addEventListener('click', () => {
         location.reload();
       });
 
-      function initProgressUpdater() {
-        progressIntervalId = setInterval(() => {
-          updateProgressDisplay();
-        }, PROGRESS_UPDATE_INTERVAL);
-      }
-
-      function stopProgressUpdater() {
-        clearInterval(progressIntervalId);
-      }
-
-      function updateProgress(percent) {
-        targetPercent = Math.min(Math.max(percent, 0), 100);
-        
-        if (currentPercent !== targetPercent) {
-          animateProgress();
-        }
-      }
-
-      function animateProgress() {
-        const step = Math.max(0.5, Math.abs(targetPercent - currentPercent) * 0.1);
-        
-        if (currentPercent < targetPercent) {
-          currentPercent = Math.min(currentPercent + step, targetPercent);
-        } else if (currentPercent > targetPercent) {
-          currentPercent = Math.max(currentPercent - step, targetPercent);
-        }
-        
-        if (Math.abs(currentPercent - targetPercent) > 0.1) {
-          requestAnimationFrame(animateProgress);
-        }
-      }
-
-      function updateProgressDisplay() {
-        const offset = circleCircumference - (currentPercent / 100 * circleCircumference);
-        progressCircle.style.strokeDashoffset = offset;
-        
-        const displayPercent = Math.round(currentPercent);
-        progressPercentage.textContent = `${displayPercent}%`;
-        
-        updateLoadingStatus(displayPercent);
-      }
-
-      function updateLoadingStatus(percent) {
-        if (percent < PREPARE_PHASE_TARGET) {
-          progressText.textContent = "准备中";
-          // 准备阶段显示动态提示，让用户感知变化
-          const statusTexts = [
-            "初始化加载程序...",
-            "配置图片加载参数...",
-            "准备扫描图片资源...",
-            "检查加载环境..."
-          ];
-          // 循环切换提示文字，配合进度动画
-          const textIndex = Math.floor((percent / PREPARE_PHASE_TARGET) * statusTexts.length);
-          loadingStatus.textContent = statusTexts[Math.min(textIndex, statusTexts.length - 1)];
-        } else if (percent < 50) { // 准备20% + 扫描30% = 50%
-          progressText.textContent = "扫描中";
-          loadingStatus.textContent = `正在查找图片 (${scanIndex}张已检查)`;
-        } else if (percent < 100) { // 加载阶段50%（50%→100%）
-          progressText.textContent = "加载中";
-          loadingStatus.textContent = `正在加载图片 (${loadedImages}/${totalImages})`;
-        } else {
-          progressText.textContent = "完成";
-          loadingStatus.textContent = "所有图片加载完成，准备展示...";
-        }
-      }
-
+      // 当网络离线时显示 overlay
       function showOverlay(msg) {
         document.getElementById('overlay-msg').textContent = msg || '网络异常，请重新加载';
         overlay.classList.add('show');
@@ -311,18 +216,26 @@
         overlay.setAttribute('aria-hidden','true');
       }
 
+      // 监听在线状态变化
       window.addEventListener('offline', () => showOverlay('网络异常，请重新加载'));
       window.addEventListener('online', () => {
+        // 尝试隐藏并继续加载
         hideOverlay();
-        if (totalImages === 0) {
-          startLoading();
+        // 若之前没有加载任何图片，重试一轮
+        if (loadedCount === 0) {
+          // reset scanning and try again from 1
+          index = 1;
+          consecutiveFailures = 0;
+          scanNext();
         }
       });
 
+      // 禁用右键菜单、拖拽、复制、另存为等常规方法（无法 100% 阻止保存，但可以阻挡常见手段）
       window.addEventListener('contextmenu', e => e.preventDefault());
       window.addEventListener('dragstart', e => e.preventDefault());
       window.addEventListener('selectstart', e => e.preventDefault());
       window.addEventListener('copy', e => e.preventDefault());
+      // 阻止常见快捷键（Ctrl/Cmd+S, Ctrl+U, Ctrl+Shift+I）
       window.addEventListener('keydown', function(e){
         if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S' || e.key === 'u' || e.key === 'U')) {
           e.preventDefault();
@@ -332,199 +245,95 @@
         }
       });
 
+      // 创建图片容器和图片元素
       function createImageElement(src){
+        // 创建容器用于显示加载状态
+        const container = document.createElement('div');
+        container.className = 'image-container';
+        
         const img = document.createElement('img');
         img.src = src;
-        img.alt = '';
+        img.alt = ''; // 仅图片展示，不显示额外文字
+        img.loading = 'lazy'; // 懒加载优化，只加载可视区域图片
         img.draggable = false;
-        return img;
+        
+        // 加载完成后显示图片
+        img.addEventListener('load', () => {
+          img.classList.add('loaded');
+          container.classList.add('loaded');
+        });
+        
+        // 加载失败处理
+        img.addEventListener('error', () => {
+          img.classList.add('error');
+          container.classList.add('error');
+        });
+        
+        container.appendChild(img);
+        return container;
       }
 
+      // 检查指定路径（通过 Image 对象）是否可加载
       function testImage(path){
         return new Promise((resolve) => {
           const im = new Image();
           im.onload = () => resolve({ok:true, path});
           im.onerror = () => resolve({ok:false, path});
-          im.src = path;
+          // 添加时间戳避免缓存影响
+          im.src = `${path}?t=${Date.now()}`;
         });
       }
 
-      // 准备阶段动画：从0%缓慢涨到20%
-      async function runPreparePhase() {
-        return new Promise((resolve) => {
-          const startTime = Date.now();
-          
-          // 动画核心：按时间比例更新进度
-          function updatePrepareProgress() {
-            const elapsed = Date.now() - startTime;
-            const progressRatio = Math.min(elapsed / PREPARE_PHASE_DURATION, 1);
-            const currentPreparePercent = progressRatio * PREPARE_PHASE_TARGET;
-            
-            updateProgress(currentPreparePercent);
-            
-            // 动画未完成，继续请求帧
-            if (progressRatio < 1) {
-              requestAnimationFrame(updatePrepareProgress);
-            } else {
-              // 动画完成，固定到20%
-              updateProgress(PREPARE_PHASE_TARGET);
-              setTimeout(resolve, 200); // 停顿200ms，衔接更自然
-            }
+      // 扫描并加载下一张图片（递归式）
+      async function scanNext(){
+        // 安全停止
+        if (index > ABSOLUTE_MAX) return finalize();
+        // 尝试所有后缀
+        let found = false;
+        for (let ext of exts){
+          const path = `images/work${index}${ext}`;
+          const res = await testImage(path);
+          if (res.ok){
+            // 成功：重置失败计数，插入图片（按序）
+            consecutiveFailures = 0;
+            loadedCount++;
+            const imgContainer = createImageElement(path);
+            gallery.appendChild(imgContainer);
+            found = true;
+            break;
           }
-          
-          // 启动准备阶段动画
-          updatePrepareProgress();
-        });
-      }
-
-      async function scanAllImages() {
-        let consecutiveFailures = 0;
-        let foundImages = [];
-        
-        // 扫描阶段占总进度的30%（20%→50%）
-        const scanProgressWeight = 30;
-        
-        while (scanIndex <= ABSOLUTE_MAX && consecutiveFailures < CONSECUTIVE_FAILURES_TO_STOP) {
-          let found = false;
-          
-          for (let ext of exts) {
-            const path = `images/work${scanIndex}${ext}`;
-            const res = await testImage(path);
-            
-            if (res.ok) {
-              foundImages.push(path);
-              consecutiveFailures = 0;
-              found = true;
-              break;
-            }
-          }
-          
-          if (!found) {
-            consecutiveFailures++;
-          }
-          
-          // 计算扫描进度（20%为起点）
-          const scanProgress = PREPARE_PHASE_TARGET + (scanIndex / ABSOLUTE_MAX) * scanProgressWeight;
-          updateProgress(scanProgress);
-          
-          await new Promise(resolve => setTimeout(resolve, 1));
-          scanIndex++;
         }
-        
-        // 扫描完成，进度固定到50%
-        updateProgress(PREPARE_PHASE_TARGET + scanProgressWeight);
-        loadingStatus.textContent = `找到 ${foundImages.length} 张图片，准备加载...`;
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        return foundImages;
-      }
-
-      async function loadAllImages(sources) {
-        totalImages = sources.length;
-        loadedImages = 0;
-        const images = [];
-        
-        if (totalImages === 0) {
-          showOverlay('未找到任何图片');
-          return [];
+        if (!found){
+          consecutiveFailures++;
         }
-        
-        // 加载阶段占总进度的50%（50%→100%）
-        const loadProgressWeight = 50;
-        
-        const loadPromises = sources.map(async (src, index) => {
-          return new Promise((resolve) => {
-            const img = new Image();
-            img.src = src;
-            img.onload = () => {
-              loadedImages++;
-              const loadProgress = 50 + (loadedImages / totalImages) * loadProgressWeight;
-              updateProgress(loadProgress);
-              images.push({src, img, index});
-              resolve();
-            };
-            img.onerror = () => {
-              loadedImages++;
-              const loadProgress = 50 + (loadedImages / totalImages) * loadProgressWeight;
-              updateProgress(loadProgress);
-              resolve();
-            };
-          });
-        });
-        
-        await Promise.all(loadPromises);
-        
-        updateProgress(100);
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        return images.sort((a, b) => a.index - b.index).map(item => item.img).filter(Boolean);
+
+        // 当没有加载过任何图片且网络不在线，直接显示网络错误
+        if (loadedCount === 0 && !navigator.onLine){
+          showOverlay('网络异常，请重新加载');
+          return;
+        }
+
+        // 如果连续失败达到阈值，认为目录末尾，结束扫描
+        if (consecutiveFailures >= CONSECUTIVE_FAILURES_TO_STOP){
+          return finalize();
+        }
+
+        index++;
+        // 继续下一张，使用requestAnimationFrame优化性能
+        requestAnimationFrame(scanNext);
       }
 
-      function displayImages(images) {
-        gallery.innerHTML = '';
-        images.forEach(img => {
-          const imgEl = createImageElement(img.src);
-          gallery.appendChild(imgEl);
-        });
-        
-        const elapsedTime = Date.now() - loadingStartTime;
-        const delayTime = Math.max(0, MIN_LOADING_DURATION - elapsedTime);
-        
-        setTimeout(() => {
-          loadingContainer.style.opacity = '0';
-          
-          setTimeout(() => {
-            gallery.style.display = 'block';
-            gallery.style.opacity = '1';
-            loadingContainer.style.display = 'none';
-            stopProgressUpdater();
-          }, 800);
-        }, delayTime);
-      }
-
-      async function startLoading() {
-        loadingStartTime = Date.now();
-        initProgressUpdater();
-        
-        try {
-          // 第一步：执行准备阶段动画（0%→20%，持续1.2秒）
-          await runPreparePhase();
-          
-          // 第二步：扫描图片（20%→50%）
-          imageSources = await scanAllImages();
-          
-          if (imageSources.length === 0) {
-            showOverlay('未找到任何图片');
-            loadingContainer.style.display = 'none';
-            stopProgressUpdater();
-            return;
-          }
-          
-          // 第三步：加载图片（50%→100%）
-          const loadedImages = await loadAllImages(imageSources);
-          
-          if (loadedImages.length === 0) {
-            showOverlay('无法加载图片');
-            loadingContainer.style.display = 'none';
-            stopProgressUpdater();
-            return;
-          }
-          
-          // 第四步：显示图片
-          displayImages(loadedImages);
-        } catch (error) {
-          console.error('加载过程出错:', error);
-          showOverlay('加载失败，请重试');
-          loadingContainer.style.display = 'none';
-          stopProgressUpdater();
+      function finalize(){
+        // 如果一张图片都没有加载，认为可能是网络问题或 images 文件夹位置不对，提示并保留重试按钮
+        if (loadedCount === 0){
+          showOverlay('网络异常，请重新加载');
+        } else {
+          hideOverlay();
         }
       }
 
-      window.addEventListener('beforeunload', () => {
-        stopProgressUpdater();
-      });
-
-      startLoading();
+      // 启动扫描
+      scanNext();
 
     })();
   </script>
