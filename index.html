@@ -1,156 +1,449 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portfolio | UI Designer</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        dark: '#121212',
-                        darker: '#0a0a0a',
-                        accent: '#3b82f6',
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'system-ui', 'sans-serif'],
-                    },
-                }
+    <title>作品集预览</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        body {
+            background-color: #121212;
+            color: #f0f0f0;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* 加载器样式 */
+        .loader-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            transition: opacity 0.5s ease;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #121212;
+            z-index: 1000;
+        }
+        
+        .loader {
+            position: relative;
+            width: 180px;
+            height: 180px;
+            margin-bottom: 30px;
+        }
+        
+        .circular-loader {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 8px solid #333;
+            border-top: 8px solid #6C63FF;
+            animation: spin 1.5s linear infinite;
+        }
+        
+        .loader-percentage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #6C63FF;
+        }
+        
+        .loader-text {
+            font-size: 1.2rem;
+            color: #aaa;
+            margin-top: 10px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* PDF预览容器 */
+        .pdf-container {
+            width: 100%;
+            height: 100vh;
+            display: none;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .pdf-viewer {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+        }
+        
+        /* PDF控制栏 */
+        .pdf-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(30, 30, 30, 0.95);
+            padding: 15px 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+        
+        .pdf-controls.hidden {
+            transform: translateY(-100%);
+        }
+        
+        .pdf-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #f0f0f0;
+        }
+        
+        .pdf-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .action-btn {
+            background-color: rgba(51, 51, 51, 0.8);
+            color: #f0f0f0;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+        
+        .action-btn:hover {
+            background-color: #6C63FF;
+            transform: translateY(-2px);
+        }
+        
+        /* 滚动提示 */
+        .scroll-hint {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(30, 30, 30, 0.9);
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 50;
+            backdrop-filter: blur(10px);
+            animation: fadeInOut 3s ease-in-out infinite;
+            opacity: 0;
+        }
+        
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #1e1e1e;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #6C63FF;
+            border-radius: 5px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5a52d5;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .loader {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .loader-percentage {
+                font-size: 1.8rem;
+            }
+            
+            .pdf-controls {
+                padding: 12px 15px;
+            }
+            
+            .pdf-title {
+                font-size: 1rem;
+            }
+            
+            .action-btn span {
+                font-size: 0.9rem;
+            }
+            
+            .scroll-hint {
+                font-size: 0.8rem;
+                padding: 8px 15px;
             }
         }
-    </script>
-    <style type="text/tailwindcss">
-        @layer utilities {
-            .loader-ring {
-                stroke-dasharray: 283;
-                stroke-dashoffset: 283;
-                transform: rotate(-90deg);
-                transform-origin: 50% 50%;
+        
+        @media (max-width: 480px) {
+            .pdf-actions {
+                gap: 10px;
             }
-            .loader-ring-animation {
-                animation: dash 1.5s ease-in-out forwards;
+            
+            .action-btn {
+                padding: 8px 12px;
             }
-            @keyframes dash {
-                to {
-                    stroke-dashoffset: var(--progress-offset);
-                }
+            
+            .action-btn span {
+                display: none;
             }
         }
     </style>
 </head>
-<body class="bg-dark text-gray-100 min-h-screen flex flex-col items-center justify-center p-4 overflow-x-hidden">
-    <!-- 加载容器 -->
-    <div id="loader-container" class="flex flex-col items-center justify-center h-screen transition-opacity duration-500">
-        <div class="relative w-40 h-40 mb-6">
-            <!-- 环形背景 -->
-            <svg class="w-full h-full" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="45" fill="none" stroke="#333" stroke-width="4" />
-                <!-- 进度环 -->
-                <circle id="progress-ring" class="loader-ring w-full h-full" cx="50" cy="50" r="45" fill="none" stroke="#3b82f6" stroke-width="4" stroke-linecap="round" />
-            </svg>
+<body>
+    <!-- 加载器部分 -->
+    <div class="loader-container" id="loaderContainer">
+        <div class="loader">
+            <div class="circular-loader"></div>
+            <div class="loader-percentage" id="percentage">0%</div>
         </div>
-        <p id="progress-text" class="text-xl font-medium text-gray-300">加载中... 0%</p>
-        <p class="text-sm text-gray-500 mt-2">请稍候，作品集正在准备</p>
+        <div class="loader-text" id="loaderText">正在加载作品集...</div>
+    </div>
+    
+    <!-- PDF预览部分 -->
+    <div class="pdf-container" id="pdfContainer">
+        <div class="pdf-controls" id="pdfControls">
+            <div class="pdf-title" id="pdfTitle">作品集预览 - portfolio.pdf</div>
+            <div class="pdf-actions">
+                <button class="action-btn" id="reloadBtn">
+                    <i class="fas fa-redo"></i>
+                    <span>重新加载</span>
+                </button>
+            </div>
+        </div>
+        <iframe class="pdf-viewer" id="pdfViewer" title="作品集PDF预览"></iframe>
+        <div class="scroll-hint" id="scrollHint">
+            <i class="fas fa-mouse-pointer"></i>
+            使用鼠标滚轮或拖动PDF进行滚动
+        </div>
     </div>
 
-    <!-- PDF预览容器 -->
-    <div id="pdf-container" class="w-full max-w-6xl hidden">
-        <div class="bg-darker p-4 md:p-6 rounded-lg shadow-2xl">
-            <iframe 
-                id="pdf-frame" 
-                src="portfolio.pdf#view=FitWidth" 
-                class="w-full min-h-[80vh] md:min-h-[90vh] rounded border border-gray-800"
-                frameborder="0"
-                scrolling="auto"
-            ></iframe>
-        </div>
-    </div>
-
+    <!-- 使用PDF.js库来渲染PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    
     <script>
-        // 初始化进度条
-        const progressRing = document.getElementById('progress-ring');
-        const progressText = document.getElementById('progress-text');
-        const loaderContainer = document.getElementById('loader-container');
-        const pdfContainer = document.getElementById('pdf-container');
-        const pdfFrame = document.getElementById('pdf-frame');
+        // 获取DOM元素
+        const loaderContainer = document.getElementById('loaderContainer');
+        const pdfContainer = document.getElementById('pdfContainer');
+        const pdfViewer = document.getElementById('pdfViewer');
+        const percentage = document.getElementById('percentage');
+        const loaderText = document.getElementById('loaderText');
+        const reloadBtn = document.getElementById('reloadBtn');
+        const pdfTitle = document.getElementById('pdfTitle');
+        const pdfControls = document.getElementById('pdfControls');
+        const scrollHint = document.getElementById('scrollHint');
         
-        // 计算圆环周长
-        const circumference = 2 * Math.PI * 45;
-        progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
+        // PDF文件路径
+        const pdfPath = 'portfolio.pdf';
         
-        // 更新进度条
-        function updateProgress(percent) {
-            const offset = circumference - (percent / 100) * circumference;
-            progressRing.style.setProperty('--progress-offset', offset);
-            progressText.textContent = `加载中... ${Math.round(percent)}%`;
+        // 滚动优化变量
+        let scrollTimeout;
+        let controlsVisible = true;
+        
+        // 模拟加载过程
+        let progress = 0;
+        const loadingInterval = setInterval(() => {
+            // 随机增加进度，模拟真实加载
+            progress += Math.floor(Math.random() * 5) + 1;
             
-            // 加载完成
-            if (percent >= 100) {
-                setTimeout(() => {
-                    loaderContainer.classList.add('opacity-0');
-                    setTimeout(() => {
-                        loaderContainer.classList.add('hidden');
-                        pdfContainer.classList.remove('hidden');
-                    }, 500);
-                }, 300);
+            if (progress >= 100) {
+                progress = 100;
+                clearInterval(loadingInterval);
+                loadPDF();
             }
+            
+            percentage.textContent = `${progress}%`;
+            
+            // 更新加载文本
+            if (progress < 30) {
+                loaderText.textContent = "正在加载作品集...";
+            } else if (progress < 70) {
+                loaderText.textContent = "解析PDF文件...";
+            } else {
+                loaderText.textContent = "准备就绪...";
+            }
+        }, 100);
+        
+        // 加载PDF函数
+        function loadPDF() {
+            // 使用PDF.js渲染PDF
+            pdfjsLib.getDocument(pdfPath).promise.then(pdf => {
+                // 获取PDF信息
+                const pdfInfo = `作品集预览 - portfolio.pdf (${pdf.numPages}页)`;
+                pdfTitle.textContent = pdfInfo;
+                
+                // 显示PDF容器，隐藏加载器
+                setTimeout(() => {
+                    loaderContainer.style.opacity = '0';
+                    
+                    setTimeout(() => {
+                        loaderContainer.style.display = 'none';
+                        pdfContainer.style.display = 'block';
+                        
+                        // 设置PDF查看器源 - 优化参数减少卡顿
+                        pdfViewer.src = `${pdfPath}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
+                        
+                        // 调整PDF查看器高度，考虑控制栏高度
+                        adjustViewerHeight();
+                        
+                        // 5秒后隐藏滚动提示
+                        setTimeout(() => {
+                            scrollHint.style.display = 'none';
+                        }, 5000);
+                        
+                        // 初始化滚动优化
+                        initScrollOptimization();
+                    }, 500);
+                }, 800);
+            }).catch(error => {
+                console.error("PDF加载错误:", error);
+                percentage.textContent = "错误";
+                loaderText.textContent = "无法加载PDF文件，请检查文件是否存在";
+                
+                // 显示错误信息
+                setTimeout(() => {
+                    loaderContainer.innerHTML = `
+                        <div style="text-align: center;">
+                            <i class="fas fa-exclamation-triangle" style="font-size: 4rem; color: #ff6b6b; margin-bottom: 20px;"></i>
+                            <h2 style="margin-bottom: 15px; color: #ff6b6b;">PDF加载失败</h2>
+                            <p style="margin-bottom: 25px; max-width: 500px;">无法加载作品集文件，请确保文件 "portfolio.pdf" 已放置在网站目录中。</p>
+                            <button id="retryBtn" class="action-btn" style="margin: 0 auto;">
+                                <i class="fas fa-redo"></i>
+                                <span>重试加载</span>
+                            </button>
+                        </div>
+                    `;
+                    
+                    document.getElementById('retryBtn').addEventListener('click', () => {
+                        location.reload();
+                    });
+                }, 1000);
+            });
         }
         
-        // 模拟初始加载（实际加载由PDF自身触发）
-        updateProgress(0);
-        
-        // 监听PDF加载进度
-        if (pdfFrame.addEventListener) {
-            // 现代浏览器
-            pdfFrame.addEventListener('load', () => {
-                updateProgress(100);
-            });
-            
-            // 监听加载进度（部分浏览器支持）
-            pdfFrame.addEventListener('progress', (e) => {
-                if (e.lengthComputable) {
-                    const percent = (e.loaded / e.total) * 100;
-                    updateProgress(percent);
+        // 初始化滚动优化
+        function initScrollOptimization() {
+            // 监听滚动事件，优化控制栏显示
+            pdfViewer.addEventListener('load', function() {
+                // 获取iframe内部的文档
+                const iframeDoc = this.contentDocument || this.contentWindow.document;
+                
+                if (iframeDoc) {
+                    // 添加滚动监听到iframe内部
+                    iframeDoc.addEventListener('scroll', handleScroll);
+                    iframeDoc.addEventListener('wheel', handleScroll);
+                    
+                    // 优化iframe内部滚动性能
+                    const style = document.createElement('style');
+                    style.textContent = `
+                        * {
+                            -webkit-font-smoothing: antialiased;
+                            -moz-osx-font-smoothing: grayscale;
+                        }
+                        .textLayer {
+                            contain: content;
+                        }
+                        .page {
+                            image-rendering: -webkit-optimize-contrast;
+                            image-rendering: crisp-edges;
+                        }
+                    `;
+                    iframeDoc.head.appendChild(style);
                 }
             });
-        } else {
-            // IE兼容
-            pdfFrame.attachEvent('onload', () => {
-                updateProgress(100);
-            });
+            
+            // 添加鼠标移动监听，显示/隐藏控制栏
+            document.addEventListener('mousemove', showControls);
         }
         
-        // 模拟加载过程（防止PDF加载过快看不到进度条）
-        let simulatedProgress = 0;
-        const simulateLoading = setInterval(() => {
-            simulatedProgress += Math.random() * 10;
-            if (simulatedProgress >= 80) {
-                simulatedProgress = 80;
-                clearInterval(simulateLoading);
+        // 处理滚动事件
+        function handleScroll() {
+            // 用户滚动时显示控制栏
+            showControls();
+            
+            // 设置定时器，一段时间后隐藏控制栏
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                hideControls();
+            }, 2000);
+        }
+        
+        // 显示控制栏
+        function showControls() {
+            if (!controlsVisible) {
+                pdfControls.classList.remove('hidden');
+                controlsVisible = true;
             }
-            updateProgress(simulatedProgress);
-        }, 200);
+            
+            // 重置隐藏计时器
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+                hideControls();
+            }, 3000);
+        }
         
-        // 当PDF实际加载完成时清除模拟进度
-        pdfFrame.onload = function() {
-            clearInterval(simulateLoading);
-            updateProgress(100);
-        };
-        
-        // 处理PDF加载错误
-        pdfFrame.onerror = function() {
-            progressText.textContent = '加载失败，请刷新重试';
-            progressText.classList.add('text-red-500');
-        };
-        
-        // 窗口大小调整时重新适配PDF
-        window.addEventListener('resize', () => {
-            if (pdfFrame.contentDocument) {
-                pdfFrame.contentDocument.location.reload();
+        // 隐藏控制栏
+        function hideControls() {
+            if (controlsVisible) {
+                pdfControls.classList.add('hidden');
+                controlsVisible = false;
             }
+        }
+        
+        // 调整PDF查看器高度以考虑控制栏
+        function adjustViewerHeight() {
+            const controls = document.querySelector('.pdf-controls');
+            const viewer = document.getElementById('pdfViewer');
+            if (controls && viewer) {
+                const controlsHeight = controls.offsetHeight;
+                viewer.style.height = `calc(100vh - ${controlsHeight}px)`;
+                viewer.style.marginTop = `${controlsHeight}px`;
+            }
+        }
+        
+        // 窗口大小改变时调整高度
+        window.addEventListener('resize', adjustViewerHeight);
+        
+        // 重新加载按钮事件
+        reloadBtn.addEventListener('click', () => {
+            // 重新加载页面
+            location.reload();
         });
     </script>
 </body>
