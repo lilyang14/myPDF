@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Portfolio | UI Designer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -30,6 +30,14 @@
                     stroke-dashoffset: var(--progress-offset);
                 }
             }
+            /* 修复移动端iframe滚动问题 */
+            .pdf-iframe-container {
+                position: relative;
+                width: 100%;
+                height: 100vh;
+                overflow-y: auto;
+                -webkit-overflow-scrolling: touch;
+            }
         }
     </style>
 </head>
@@ -47,16 +55,19 @@
         <p id="progress-text" class="text-lg font-medium text-gray-300">加载中... 0%</p>
     </div>
 
-    <!-- PDF预览容器 - 响应式适配 -->
+    <!-- PDF预览容器 - 响应式适配优化 -->
     <div id="pdf-container" class="w-full md:w-[65%] md:max-w-[1200px] h-screen hidden mx-auto p-0 m-0">
-        <iframe 
-            id="pdf-frame" 
-            src="portfolio.pdf#view=FitWidth&navpanes=0&toolbar=0&page=1" 
-            class="w-full h-full border-0 outline-0"
-            frameborder="0"
-            scrolling="auto"
-            allowfullscreen
-        ></iframe>
+        <div class="pdf-iframe-container">
+            <iframe 
+                id="pdf-frame" 
+                src="portfolio.pdf#view=FitWidth&navpanes=0&toolbar=0&page=1&zoom=100" 
+                class="w-full h-full min-h-[100vh] border-0 outline-0"
+                frameborder="0"
+                scrolling="auto"
+                allowfullscreen
+                style="object-fit: contain;"
+            ></iframe>
+        </div>
     </div>
 
     <script>
@@ -73,6 +84,7 @@
         
         // 标记PDF是否已加载完成
         let pdfLoaded = false;
+        let isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
         
         // 更新进度条
         function updateProgress(percent) {
@@ -89,8 +101,26 @@
                     setTimeout(() => {
                         loaderContainer.classList.add('hidden');
                         pdfContainer.classList.remove('hidden');
+                        // 移动端额外适配处理
+                        if (isMobile) {
+                            setTimeout(() => {
+                                adjustMobilePDF();
+                            }, 500);
+                        }
                     }, 500);
                 }, 300);
+            }
+        }
+        
+        // 移动端PDF适配调整
+        function adjustMobilePDF() {
+            if (isMobile && pdfFrame.contentWindow) {
+                try {
+                    // 移动端强制适应宽度
+                    pdfFrame.src = pdfFrame.src.replace(/zoom=\d+/, 'zoom=100') + '&view=FitWidth';
+                } catch (e) {
+                    console.log('移动端适配调整:', e);
+                }
             }
         }
         
@@ -101,6 +131,9 @@
         pdfFrame.onload = function() {
             if (!pdfLoaded) {
                 updateProgress(100);
+            } else if (isMobile) {
+                // 移动端加载完成后再次调整
+                adjustMobilePDF();
             }
         };
         
@@ -137,6 +170,13 @@
                 progressText.classList.add('text-red-400');
             }
         };
+        
+        // 窗口大小变化时适配（移动端）
+        window.addEventListener('resize', () => {
+            if (pdfLoaded && isMobile) {
+                adjustMobilePDF();
+            }
+        });
     </script>
 </body>
 </html>
