@@ -111,7 +111,7 @@
     <!-- PDF预览 -->
     <div class="pdf-container" id="pdfContainer">
         <div class="pdf-controls" id="controls">
-            <div class="pdf-title" id="title">作品集预览 - portfolio.pdf</div>
+            <div class="pdf-title" id="title">作品集预览</div>
             <button class="reload-btn" id="reloadBtn">
                 <span>↻</span>
                 <span>重新加载</span>
@@ -152,12 +152,13 @@
             loadingText.textContent = progress < 70 ? "正在加载作品集..." : "准备就绪...";
         }, 100);
         
-        // 加载PDF
-        async function loadPDF() {
-            try {
-                // 设置PDF查看器
-                pdfViewer.src = `${PDF_FILE}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`;
-                
+        // 加载PDF - 简化版本，只使用iframe
+        function loadPDF() {
+            // 直接设置PDF查看器
+            pdfViewer.src = PDF_FILE;
+            
+            // 监听iframe加载完成
+            pdfViewer.onload = function() {
                 // 显示PDF
                 setTimeout(() => {
                     loader.style.opacity = '0';
@@ -166,6 +167,9 @@
                         pdfContainer.style.display = 'block';
                         adjustViewerHeight();
                         
+                        // 更新标题
+                        updateTitle();
+                        
                         // 隐藏提示
                         setTimeout(() => hint.style.display = 'none', 5000);
                         
@@ -173,15 +177,33 @@
                         initScrollOptimization();
                     }, 400);
                 }, 600);
-                
-            } catch (error) {
-                console.error("PDF加载失败:", error);
+            };
+            
+            // 处理加载错误
+            pdfViewer.onerror = function() {
                 showError();
+            };
+        }
+        
+        // 更新标题
+        function updateTitle() {
+            try {
+                // 尝试从iframe获取页面信息
+                const iframeDoc = pdfViewer.contentDocument || pdfViewer.contentWindow.document;
+                if (iframeDoc) {
+                    // 这里可以添加获取PDF页数的逻辑
+                    // 但由于跨域限制，可能无法直接获取
+                    title.textContent = `作品集预览 - ${PDF_FILE}`;
+                }
+            } catch (e) {
+                // 如果跨域，只显示文件名
+                title.textContent = `作品集预览 - ${PDF_FILE}`;
             }
         }
         
         // 显示错误
         function showError() {
+            clearInterval(loadInterval);
             percentage.textContent = "错误";
             loadingText.textContent = "无法加载PDF，请检查文件是否存在";
             
@@ -190,7 +212,7 @@
                     <div style="text-align:center;">
                         <div style="font-size:3rem;color:#ff6b6b;margin-bottom:15px;">⚠</div>
                         <h3 style="margin-bottom:10px;color:#ff6b6b;">PDF加载失败</h3>
-                        <p style="margin-bottom:20px;">请确保文件 "portfolio.pdf" 在网站目录中</p>
+                        <p style="margin-bottom:20px;max-width:400px;margin:0 auto 20px;">请确保文件 "portfolio.pdf" 在网站目录中</p>
                         <button onclick="location.reload()" class="reload-btn" style="margin:0 auto;">
                             <span>↻</span>
                             <span>重试加载</span>
@@ -215,11 +237,6 @@
                 if (iframeDoc) {
                     iframeDoc.addEventListener('scroll', handleScroll);
                     iframeDoc.addEventListener('wheel', handleScroll);
-                    
-                    // 性能优化
-                    const style = document.createElement('style');
-                    style.textContent = '*{-webkit-font-smoothing:antialiased} .textLayer{contain:content}';
-                    iframeDoc.head.appendChild(style);
                 }
             });
             
