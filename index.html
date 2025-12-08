@@ -1,293 +1,142 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>作品集预览</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #121212; color: #f0f0f0; min-height: 100vh; overflow: hidden; font-family: system-ui, sans-serif; }
-        
-        /* 加载器 */
-        .loader-container {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            background: #121212; z-index: 1000; transition: opacity 0.5s;
-        }
-        
-        .loader {
-            width: 120px; height: 120px; position: relative; margin-bottom: 15px;
-        }
-        
-        .circular-loader {
-            width: 100%; height: 100%; border-radius: 50%;
-            border: 5px solid #333; border-top: 5px solid #6C63FF;
-            animation: spin 1.2s linear infinite;
-        }
-        
-        .loader-percentage {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 1.5rem; font-weight: 600; color: #6C63FF;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        /* PDF容器 */
-        .pdf-container {
-            width: 100%; height: 100vh; display: none;
-        }
-        
-        .pdf-viewer {
-            width: 100%; height: 100%; border: none; display: block;
-        }
-        
-        /* 极简控制栏 */
-        .pdf-controls {
-            position: fixed; top: 10px; left: 50%; transform: translateX(-50%);
-            background: rgba(30, 30, 30, 0.9); padding: 8px 16px;
-            display: flex; align-items: center; gap: 20px; z-index: 100;
-            border-radius: 20px; backdrop-filter: blur(8px);
-            min-width: 300px; justify-content: center;
-            transition: opacity 0.3s;
-        }
-        
-        .pdf-controls.hidden {
-            opacity: 0;
-        }
-        
-        .pdf-title {
-            font-size: 0.9rem; font-weight: 500; color: #f0f0f0;
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-            max-width: 150px;
-        }
-        
-        .zoom-controls {
-            display: flex; align-items: center; gap: 10px;
-        }
-        
-        .zoom-btn {
-            background: rgba(51, 51, 51, 0.8); color: #f0f0f0; border: none;
-            width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1rem; font-weight: bold; transition: all 0.2s;
-        }
-        
-        .zoom-btn:hover {
-            background: #6C63FF; transform: scale(1.1);
-        }
-        
-        .zoom-level {
-            font-size: 0.85rem; color: #aaa; min-width: 40px; text-align: center;
-        }
-        
-        /* 响应式 */
-        @media (max-width: 768px) {
-            .pdf-controls {
-                padding: 6px 12px; gap: 12px; min-width: 260px;
+    <title>Portfolio | UI Designer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        dark: '#121212',
+                        accent: '#3b82f6',
+                    },
+                }
             }
-            
-            .pdf-title {
-                font-size: 0.8rem; max-width: 100px;
+        }
+    </script>
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .loader-ring {
+                stroke-dasharray: 283;
+                stroke-dashoffset: 283;
+                transform: rotate(-90deg);
+                transform-origin: 50% 50%;
             }
-            
-            .zoom-btn {
-                width: 28px; height: 28px; font-size: 0.9rem;
+            @keyframes dash {
+                to {
+                    stroke-dashoffset: var(--progress-offset);
+                }
             }
         }
     </style>
 </head>
-<body>
-    <!-- 加载器 -->
-    <div class="loader-container" id="loader">
-        <div class="loader">
-            <div class="circular-loader"></div>
-            <div class="loader-percentage" id="percentage">0%</div>
+<body class="bg-dark text-gray-100 min-h-screen flex flex-col items-center justify-center p-0 m-0 overflow-x-hidden">
+    <!-- 加载容器 -->
+    <div id="loader-container" class="flex flex-col items-center justify-center h-screen w-full transition-opacity duration-500">
+        <div class="relative w-32 h-32 mb-4">
+            <!-- 环形背景 -->
+            <svg class="w-full h-full" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#222" stroke-width="3" />
+                <!-- 进度环 -->
+                <circle id="progress-ring" class="loader-ring w-full h-full" cx="50" cy="50" r="45" fill="none" stroke="#3b82f6" stroke-width="3" stroke-linecap="round" />
+            </svg>
         </div>
+        <p id="progress-text" class="text-lg font-medium text-gray-300">加载中... 0%</p>
     </div>
-    
-    <!-- PDF预览 -->
-    <div class="pdf-container" id="pdfContainer">
-        <div class="pdf-controls" id="controls">
-            <div class="pdf-title" id="title">作品集预览</div>
-            <div class="zoom-controls">
-                <button class="zoom-btn" id="zoomOut" title="缩小">-</button>
-                <div class="zoom-level" id="zoomLevel">100%</div>
-                <button class="zoom-btn" id="zoomIn" title="放大">+</button>
-            </div>
-        </div>
-        <iframe class="pdf-viewer" id="pdfViewer" title="作品集PDF预览"></iframe>
+
+    <!-- PDF预览容器 - 纯极简显示 -->
+    <div id="pdf-container" class="w-full h-screen hidden p-0 m-0">
+        <iframe 
+            id="pdf-frame" 
+            src="portfolio.pdf#view=FitWidth&navpanes=0&toolbar=0&page=1" 
+            class="w-full h-full border-0 outline-0"
+            frameborder="0"
+            scrolling="auto"
+            allowfullscreen
+        ></iframe>
     </div>
 
     <script>
-        // DOM元素
-        const loader = document.getElementById('loader');
-        const percentage = document.getElementById('percentage');
-        const pdfContainer = document.getElementById('pdfContainer');
-        const pdfViewer = document.getElementById('pdfViewer');
-        const controls = document.getElementById('controls');
-        const title = document.getElementById('title');
-        const zoomOut = document.getElementById('zoomOut');
-        const zoomIn = document.getElementById('zoomIn');
-        const zoomLevel = document.getElementById('zoomLevel');
+        // 初始化元素
+        const progressRing = document.getElementById('progress-ring');
+        const progressText = document.getElementById('progress-text');
+        const loaderContainer = document.getElementById('loader-container');
+        const pdfContainer = document.getElementById('pdf-container');
+        const pdfFrame = document.getElementById('pdf-frame');
         
-        // 配置
-        const PDF_FILE = 'portfolio.pdf';
-        let controlsTimer, controlsVisible = true;
-        let currentZoom = 100;
+        // 计算圆环周长
+        const circumference = 2 * Math.PI * 45;
+        progressRing.style.strokeDasharray = `${circumference} ${circumference}`;
         
-        // 模拟加载
-        let progress = 0;
-        const loadInterval = setInterval(() => {
-            progress += Math.floor(Math.random() * 5) + 1;
-            if (progress >= 100) {
-                progress = 100;
-                clearInterval(loadInterval);
-                loadPDF();
-            }
-            percentage.textContent = `${progress}%`;
-        }, 100);
+        // 标记PDF是否已加载完成
+        let pdfLoaded = false;
         
-        // 加载PDF
-        function loadPDF() {
-            // 设置PDF查看器
-            pdfViewer.src = PDF_FILE;
+        // 更新进度条
+        function updateProgress(percent) {
+            const offset = circumference - (percent / 100) * circumference;
+            progressRing.style.setProperty('--progress-offset', offset);
+            progressRing.style.animation = 'dash 0.3s ease-in-out forwards';
+            progressText.textContent = `加载中... ${Math.round(percent)}%`;
             
-            // 监听iframe加载完成
-            pdfViewer.onload = function() {
-                // 显示PDF
+            // 加载完成
+            if (percent >= 100 && !pdfLoaded) {
+                pdfLoaded = true;
                 setTimeout(() => {
-                    loader.style.opacity = '0';
+                    loaderContainer.classList.add('opacity-0');
                     setTimeout(() => {
-                        loader.style.display = 'none';
-                        pdfContainer.style.display = 'block';
-                        
-                        // 更新标题
-                        title.textContent = `作品集预览`;
-                        
-                        // 初始化交互
-                        initInteraction();
-                    }, 400);
-                }, 600);
-            };
-            
-            // 处理加载错误
-            pdfViewer.onerror = function() {
-                showError();
-            };
+                        loaderContainer.classList.add('hidden');
+                        pdfContainer.classList.remove('hidden');
+                    }, 500);
+                }, 300);
+            }
         }
         
-        // 显示错误
-        function showError() {
-            clearInterval(loadInterval);
-            percentage.textContent = "错误";
-            
-            setTimeout(() => {
-                loader.innerHTML = `
-                    <div style="text-align:center;">
-                        <div style="font-size:3rem;color:#ff6b6b;margin-bottom:15px;">⚠</div>
-                        <h3 style="margin-bottom:10px;color:#ff6b6b;">PDF加载失败</h3>
-                        <p style="margin-bottom:20px;max-width:400px;margin:0 auto 20px;">请确保文件 "portfolio.pdf" 在网站目录中</p>
-                        <button onclick="location.reload()" style="
-                            background: #6C63FF; color: white; border: none;
-                            padding: 10px 20px; border-radius: 6px; cursor: pointer;
-                            font-size: 0.9rem; transition: all 0.2s;
-                        ">
-                            重试加载
-                        </button>
-                    </div>
-                `;
-            }, 800);
-        }
+        // 初始化进度
+        updateProgress(0);
         
-        // 初始化交互
-        function initInteraction() {
-            // 鼠标移动显示控制栏
-            document.addEventListener('mousemove', () => {
-                if (!controlsVisible) {
-                    controls.classList.remove('hidden');
-                    controlsVisible = true;
+        // 监听PDF加载完成
+        pdfFrame.onload = function() {
+            if (!pdfLoaded) {
+                updateProgress(100);
+            }
+        };
+        
+        // 监听加载进度（部分浏览器支持）
+        if (pdfFrame.addEventListener) {
+            pdfFrame.addEventListener('progress', (e) => {
+                if (e.lengthComputable && !pdfLoaded) {
+                    const percent = (e.loaded / e.total) * 100;
+                    updateProgress(percent);
                 }
-                clearTimeout(controlsTimer);
-                controlsTimer = setTimeout(() => {
-                    controls.classList.add('hidden');
-                    controlsVisible = false;
-                }, 2000);
-            });
-            
-            // 点击控制栏保持显示
-            controls.addEventListener('click', (e) => {
-                e.stopPropagation();
-                clearTimeout(controlsTimer);
             });
         }
         
-        // 缩放功能
-        zoomOut.addEventListener('click', () => {
-            if (currentZoom > 25) {
-                currentZoom -= 25;
-                updateZoom();
-            }
-        });
-        
-        zoomIn.addEventListener('click', () => {
-            if (currentZoom < 400) {
-                currentZoom += 25;
-                updateZoom();
-            }
-        });
-        
-        function updateZoom() {
-            zoomLevel.textContent = `${currentZoom}%`;
-            
-            // 尝试调整iframe内部缩放
-            try {
-                const iframeDoc = pdfViewer.contentDocument || pdfViewer.contentWindow.document;
-                if (iframeDoc && iframeDoc.body) {
-                    iframeDoc.body.style.zoom = `${currentZoom}%`;
-                }
-            } catch (e) {
-                // 如果跨域，尝试通过CSS transform缩放整个iframe
-                pdfViewer.style.transform = `scale(${currentZoom/100})`;
-                pdfViewer.style.transformOrigin = 'top left';
-                
-                // 计算并调整iframe大小以保持布局
-                const container = pdfViewer.parentElement;
-                const scale = currentZoom / 100;
-                pdfViewer.style.width = `${100/scale}%`;
-                pdfViewer.style.height = `${100/scale}%`;
+        // 模拟加载过程
+        let simulatedProgress = 0;
+        const simulateLoading = setInterval(() => {
+            if (pdfLoaded) {
+                clearInterval(simulateLoading);
+                return;
             }
             
-            // 显示控制栏
-            if (!controlsVisible) {
-                controls.classList.remove('hidden');
-                controlsVisible = true;
+            simulatedProgress += Math.random() * 6;
+            if (simulatedProgress >= 88) {
+                simulatedProgress = 88;
             }
-            clearTimeout(controlsTimer);
-            controlsTimer = setTimeout(() => {
-                controls.classList.add('hidden');
-                controlsVisible = false;
-            }, 2000);
-        }
+            updateProgress(simulatedProgress);
+        }, 350);
         
-        // 添加键盘快捷键
-        document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey || e.metaKey) {
-                if (e.key === '+' || e.key === '=') {
-                    e.preventDefault();
-                    zoomIn.click();
-                } else if (e.key === '-') {
-                    e.preventDefault();
-                    zoomOut.click();
-                } else if (e.key === '0') {
-                    e.preventDefault();
-                    currentZoom = 100;
-                    updateZoom();
-                }
+        // 处理PDF加载错误
+        pdfFrame.onerror = function() {
+            if (!pdfLoaded) {
+                clearInterval(simulateLoading);
+                progressText.textContent = '加载失败，请刷新';
+                progressText.classList.add('text-red-400');
             }
-        });
+        };
     </script>
 </body>
 </html>
