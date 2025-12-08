@@ -4,418 +4,284 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>个人作品集</title>
-    <!-- Favicon -->
     <link rel="apple-touch-icon" sizes="180x180" href="favicon_io/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="favicon_io/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="favicon_io/favicon-16x16.png">
     <link rel="manifest" href="favicon_io/site.webmanifest">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html {
-            scroll-behavior: smooth;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            background-color: #1C1C1C;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            color: #FFFFFF;
-            line-height: 1.6;
-            padding-top: 60px; /* 内容区内边距 */
+            background: #1C1C1C;
+            color: #fff;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            padding-top: 60px;
             min-height: 100vh;
-            overflow-x: hidden;
         }
-
-        /* 加载容器 */
-        .loading-container {
+        
+        .loading {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            background-color: #1C1C1C;
+            top: 0; left: 0;
+            width: 100%; height: 100vh;
+            background: #1C1C1C;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            transition: opacity 0.5s ease;
+            transition: opacity 0.5s;
         }
-
-        .loading-container.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-
-        /* 环形加载器 */
-        .loader {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            border: 8px solid rgba(255, 255, 255, 0.1);
-            border-top: 8px solid #FFFFFF;
-            animation: spin 1.2s linear infinite;
+        
+        .loading.hidden { opacity: 0; pointer-events: none; }
+        
+        .progress {
+            width: 48px; height: 48px;
             margin-bottom: 20px;
         }
-
+        
+        .progress-ring {
+            width: 100%; height: 100%;
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring circle {
+            cx: 24; cy: 24; r: 20;
+            fill: none;
+            stroke: #fff;
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-dasharray: 126;
+            stroke-dashoffset: 126;
+            transition: stroke-dashoffset 0.5s, stroke 0.5s;
+        }
+        
         .loading-text {
-            font-size: 18px;
-            color: #FFFFFF;
-            margin-top: 15px;
-            font-weight: 300;
-        }
-
-        .progress-text {
             font-size: 14px;
-            color: rgba(255, 255, 255, 0.7);
-            margin-top: 10px;
+            color: #fff;
+            text-align: center;
+            line-height: 1.4;
         }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        
+        .loading-percent {
+            font-size: 16px;
+            font-weight: 500;
+            margin-top: 4px;
+            transition: color 0.5s;
         }
-
-        /* 图片容器 */
-        .portfolio-container {
+        
+        .portfolio {
             display: flex;
             flex-direction: column;
             align-items: center;
             width: 100%;
         }
-
+        
         .image-item {
             width: 100%;
             display: flex;
             justify-content: center;
-            margin-bottom: 0; /* 图片之间无间距 */
             opacity: 0;
             transform: translateY(20px);
-            transition: opacity 0.6s ease, transform 0.6s ease;
+            transition: opacity 0.6s, transform 0.6s;
         }
-
-        .image-item.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
+        
+        .image-item.show { opacity: 1; transform: translateY(0); }
+        
         .image-item img {
             width: 100%;
             height: auto;
             display: block;
-            pointer-events: none; /* 防止图片拖拽 */
-            user-select: none; /* 防止选择 */
+            pointer-events: none;
+            user-select: none;
         }
-
-        /* 响应式设置 */
-        @media (max-width: 768px) {
-            .image-item img {
-                width: 100%; /* 移动端宽度为100% */
-            }
-        }
-
-        @media (min-width: 769px) {
-            .image-item img {
-                width: 65%; /* 桌面端宽度为65% */
-                max-width: 1200px; /* 最大宽度限制 */
-            }
-        }
-
-        /* 错误提示 */
-        .error-container {
+        
+        .error {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100vh;
-            background-color: #1C1C1C;
+            top: 0; left: 0;
+            width: 100%; height: 100vh;
+            background: #1C1C1C;
             display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             z-index: 1001;
-            text-align: center;
         }
-
-        .error-container.show {
-            display: flex;
-        }
-
+        
+        .error.show { display: flex; }
+        
         .error-text {
             font-size: 20px;
-            color: #FFFFFF;
             margin-bottom: 20px;
         }
-
-        .reload-button {
-            width: 96px;
-            height: 36px;
-            background-color: rgba(255, 255, 255, 0.2);
-            border: none;
-            border-radius: 4px;
-            color: #FFFFFF;
-            font-size: 14px;
+        
+        .reload-btn {
+            width: 96px; height: 36px;
+            background: rgba(255, 255, 255, 0.2);
+            border: none; border-radius: 4px;
+            color: #fff; font-size: 14px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
         }
-
-        .reload-button:hover {
-            background-color: rgba(255, 255, 255, 0.3);
-        }
-
-        /* 版权保护叠加层 */
+        
         .protect-overlay {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             z-index: 9999;
-            pointer-events: all;
         }
-
-        /* 隐藏滚动条但保持滚动功能 */
-        body::-webkit-scrollbar {
-            display: none;
-        }
-
-        body {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+        
+        @media (min-width: 769px) {
+            .image-item img {
+                width: 65%;
+                max-width: 1200px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- 版权保护叠加层 -->
     <div class="protect-overlay" oncontextmenu="return false" onselectstart="return false" ondragstart="return false"></div>
     
-    <!-- 加载容器 -->
-    <div class="loading-container" id="loadingContainer">
-        <div class="loader"></div>
-        <div class="loading-text">正在加载作品集</div>
-        <div class="progress-text" id="progressText">0/0</div>
+    <div class="loading" id="loading">
+        <div class="progress">
+            <svg class="progress-ring" viewBox="0 0 48 48">
+                <circle id="progressCircle" cx="24" cy="24" r="20"></circle>
+            </svg>
+        </div>
+        <div class="loading-text">
+            作品集加载中...<br>
+            <span class="loading-percent" id="percent">0%</span>
+        </div>
     </div>
     
-    <!-- 错误提示容器 -->
-    <div class="error-container" id="errorContainer">
+    <div class="error" id="error">
         <div class="error-text">网络异常，请重新加载</div>
-        <button class="reload-button" id="reloadButton">重新加载</button>
+        <button class="reload-btn" id="reloadBtn">重新加载</button>
     </div>
     
-    <!-- 作品集容器 -->
-    <div class="portfolio-container" id="portfolioContainer"></div>
+    <div class="portfolio" id="portfolio"></div>
 
     <script>
-        // 刷新页面后自动滚动到顶部
-        window.onload = function() {
-            window.scrollTo(0, 0);
+        // 基础功能
+        window.onload = () => window.scrollTo(0, 0);
+        document.addEventListener('contextmenu', e => e.preventDefault());
+        document.addEventListener('dragstart', e => e.target.tagName === 'IMG' && e.preventDefault());
+        document.addEventListener('selectstart', e => e.preventDefault());
+        
+        // 进度条控制
+        const circle = document.getElementById('progressCircle');
+        const circumference = 2 * Math.PI * 20;
+        circle.style.strokeDasharray = circumference;
+        circle.style.strokeDashoffset = circumference;
+        
+        const updateProgress = (loaded, total) => {
+            const percent = Math.round((loaded / total) * 100) || 0;
+            document.getElementById('percent').textContent = percent + '%';
+            circle.style.strokeDashoffset = circumference - (percent / 100) * circumference;
+            
+            if (loaded === total && total > 0) {
+                document.getElementById('percent').style.color = '#4CAF50';
+                circle.style.stroke = '#4CAF50';
+            }
         };
         
-        // 禁止右键菜单
-        document.addEventListener('contextmenu', function(e) {
-            e.preventDefault();
-            return false;
-        });
-        
-        // 禁止拖拽
-        document.addEventListener('dragstart', function(e) {
-            if (e.target.tagName === 'IMG') {
-                e.preventDefault();
-                return false;
-            }
-        });
-        
-        // 禁止选择文本和图片
-        document.addEventListener('selectstart', function(e) {
-            e.preventDefault();
-            return false;
-        });
-        
-        // 图片扩展名列表
-        const imageExtensions = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
-        
-        // 获取图片文件列表
-        async function getImageFiles() {
-            // 在实际部署中，这里应该是一个API调用，获取服务器上的文件列表
-            // 由于我们是在本地文件系统运行，我们模拟获取图片的过程
-            // 假设图片命名规则为 work1.png, work2.jpg, work3.png...
-            
-            // 模拟网络延迟
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            // 这里我们无法直接读取本地文件系统，所以采用动态检测的方式
-            // 在实际部署中，应该由服务器API返回图片列表
-            // 我们这里模拟一个包含10张图片的列表
-            const imageFiles = [];
-            let index = 1;
-            let foundImages = true;
-            
-            // 尝试检测图片，最多检测50张
-            while (index <= 50 && foundImages) {
-                // 尝试两种扩展名
-                const pngExists = await checkImageExists(`images/work${index}.png`);
-                const jpgExists = await checkImageExists(`images/work${index}.jpg`);
-                const jpegExists = await checkImageExists(`images/work${index}.jpeg`);
+        // 图片加载
+        const loadImages = async () => {
+            try {
+                // 获取图片列表（模拟）
+                const imageFiles = await getImageFiles();
+                if (imageFiles.length === 0) throw new Error('未找到图片');
                 
-                if (pngExists) {
-                    imageFiles.push(`images/work${index}.png`);
-                } else if (jpgExists) {
-                    imageFiles.push(`images/work${index}.jpg`);
-                } else if (jpegExists) {
-                    imageFiles.push(`images/work${index}.jpeg`);
-                } else {
-                    foundImages = false;
-                    break;
-                }
+                updateProgress(0, imageFiles.length);
+                let loaded = 0;
                 
-                index++;
+                // 加载每张图片
+                imageFiles.forEach((src, i) => {
+                    const img = new Image();
+                    img.src = src;
+                    img.alt = `作品 ${i + 1}`;
+                    
+                    img.onload = img.onerror = () => {
+                        loaded++;
+                        updateProgress(loaded, imageFiles.length);
+                        
+                        if (loaded === imageFiles.length) {
+                            setTimeout(() => {
+                                document.getElementById('loading').classList.add('hidden');
+                                displayImages(imageFiles);
+                            }, 800);
+                        }
+                    };
+                });
+            } catch (e) {
+                console.error(e);
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('error').classList.add('show');
+            }
+        };
+        
+        // 显示图片
+        const displayImages = (images) => {
+            const portfolio = document.getElementById('portfolio');
+            images.forEach((src, i) => {
+                const div = document.createElement('div');
+                div.className = 'image-item';
+                div.innerHTML = `<img src="${src}" alt="作品 ${i + 1}">`;
+                portfolio.appendChild(div);
+                
+                setTimeout(() => div.classList.add('show'), 50);
+            });
+        };
+        
+        // 模拟获取图片文件
+        const getImageFiles = async () => {
+            await new Promise(r => setTimeout(r, 300));
+            
+            const files = [];
+            for (let i = 1; i <= 50; i++) {
+                const png = await checkImage(`images/work${i}.png`);
+                const jpg = await checkImage(`images/work${i}.jpg`);
+                const jpeg = await checkImage(`images/work${i}.jpeg`);
+                
+                if (png) files.push(`images/work${i}.png`);
+                else if (jpg) files.push(`images/work${i}.jpg`);
+                else if (jpeg) files.push(`images/work${i}.jpeg`);
+                else break;
             }
             
-            // 如果没有检测到任何图片，使用占位图
-            if (imageFiles.length === 0) {
-                console.warn('未找到图片，将使用示例图片');
-                // 生成示例图片URL
+            // 如果没有本地图片，使用示例图片
+            if (files.length === 0) {
                 for (let i = 1; i <= 6; i++) {
-                    imageFiles.push(`https://picsum.photos/seed/work${i}/1200/800`);
+                    files.push(`https://picsum.photos/seed/work${i}/1200/800`);
                 }
             }
             
-            return imageFiles;
-        }
+            return files;
+        };
         
-        // 检查图片是否存在
-        function checkImageExists(url) {
-            return new Promise((resolve) => {
+        const checkImage = (url) => {
+            return new Promise(resolve => {
                 const img = new Image();
                 img.onload = () => resolve(true);
                 img.onerror = () => resolve(false);
                 img.src = url;
-                
-                // 设置超时时间
                 setTimeout(() => resolve(false), 500);
             });
-        }
+        };
         
-        // 加载图片
-        async function loadImages() {
-            const portfolioContainer = document.getElementById('portfolioContainer');
-            const loadingContainer = document.getElementById('loadingContainer');
-            const progressText = document.getElementById('progressText');
-            const errorContainer = document.getElementById('errorContainer');
-            
-            try {
-                // 获取图片列表
-                const imageFiles = await getImageFiles();
-                
-                if (imageFiles.length === 0) {
-                    throw new Error('未找到任何图片');
-                }
-                
-                progressText.textContent = `0/${imageFiles.length}`;
-                
-                // 创建图片元素
-                let loadedCount = 0;
-                const totalCount = imageFiles.length;
-                
-                // 为每张图片创建容器
-                imageFiles.forEach((src, index) => {
-                    const imageItem = document.createElement('div');
-                    imageItem.className = 'image-item';
-                    imageItem.id = `image-${index + 1}`;
-                    
-                    const img = document.createElement('img');
-                    img.src = src;
-                    img.alt = `作品 ${index + 1}`;
-                    img.loading = 'lazy';
-                    
-                    // 图片加载成功
-                    img.onload = () => {
-                        loadedCount++;
-                        progressText.textContent = `${loadedCount}/${totalCount}`;
-                        
-                        // 所有图片加载完成
-                        if (loadedCount === totalCount) {
-                            // 延迟隐藏加载界面，确保动画效果
-                            setTimeout(() => {
-                                loadingContainer.classList.add('hidden');
-                                
-                                // 延迟显示图片，确保过渡效果
-                                setTimeout(() => {
-                                    const allImageItems = document.querySelectorAll('.image-item');
-                                    allImageItems.forEach(item => {
-                                        item.classList.add('show');
-                                    });
-                                }, 100);
-                            }, 800);
-                        }
-                    };
-                    
-                    // 图片加载失败
-                    img.onerror = () => {
-                        loadedCount++;
-                        progressText.textContent = `${loadedCount}/${totalCount}`;
-                        
-                        // 设置一个占位图
-                        img.src = `https://picsum.photos/seed/error${index}/1200/800`;
-                        img.alt = '图片加载失败';
-                        
-                        // 所有图片加载完成（包括失败的）
-                        if (loadedCount === totalCount) {
-                            setTimeout(() => {
-                                loadingContainer.classList.add('hidden');
-                                
-                                setTimeout(() => {
-                                    const allImageItems = document.querySelectorAll('.image-item');
-                                    allImageItems.forEach(item => {
-                                        item.classList.add('show');
-                                    });
-                                }, 100);
-                            }, 800);
-                        }
-                    };
-                    
-                    imageItem.appendChild(img);
-                    portfolioContainer.appendChild(imageItem);
-                });
-                
-            } catch (error) {
-                console.error('加载图片时出错:', error);
-                // 显示错误提示
-                loadingContainer.classList.add('hidden');
-                errorContainer.classList.add('show');
-            }
-        }
-        
-        // 重新加载按钮事件
-        document.getElementById('reloadButton').addEventListener('click', function() {
-            const errorContainer = document.getElementById('errorContainer');
-            const loadingContainer = document.getElementById('loadingContainer');
-            const portfolioContainer = document.getElementById('portfolioContainer');
-            
-            // 清空现有图片
-            portfolioContainer.innerHTML = '';
-            
-            // 隐藏错误提示，显示加载界面
-            errorContainer.classList.remove('show');
-            loadingContainer.classList.remove('hidden');
-            
-            // 重新加载图片
+        // 重新加载
+        document.getElementById('reloadBtn').addEventListener('click', () => {
+            document.getElementById('error').classList.remove('show');
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('percent').textContent = '0%';
+            document.getElementById('percent').style.color = '#fff';
+            circle.style.stroke = '#fff';
+            circle.style.strokeDashoffset = circumference;
+            document.getElementById('portfolio').innerHTML = '';
             loadImages();
         });
         
-        // 页面加载完成后开始加载图片
-        document.addEventListener('DOMContentLoaded', function() {
-            loadImages();
-        });
-        
-        // 确保页面刷新后滚动到顶部
-        window.addEventListener('beforeunload', function() {
-            window.scrollTo(0, 0);
-        });
+        // 初始化
+        setTimeout(loadImages, 300);
+        window.addEventListener('beforeunload', () => window.scrollTo(0, 0));
     </script>
 </body>
 </html>
