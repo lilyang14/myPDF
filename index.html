@@ -32,9 +32,9 @@
       min-height: 400px; /* 骨架屏最小高度 */
       background-color: #2e2e2e; /* 骨架屏背景色 */
       position: relative;
-      margin-bottom: 20px;
+      /* margin-bottom: 0; */ /* 间距已移除 */
       overflow: hidden;
-      border-radius: 8px;
+      /* border-radius: 0; */ /* 圆角已移除 */
       /* 初始加载动画 */
       animation: skeletonPulse 1.5s infinite linear;
     }
@@ -117,11 +117,11 @@
 
     // ==================== B. 状态变量 (STATE) ====================
     const state = {
-      currentIndex: 1,      // 下一个要发射请求的图片序号
-      renderIndex: 1,       // 当前等待被添加到 DOM 的图片序号 (顺序控制)
+      currentIndex: 1,
+      renderIndex: 1,
       failCount: 0,
       activeRequests: 0,
-      buffer: {},           // 结果缓存区 { index: containerElement|null }
+      buffer: {},
       isStopped: false
     };
 
@@ -203,9 +203,7 @@
 
     // ==================== F. 辅助功能函数 ====================
     
-    /**
-     * 创建图片容器 (包含加载状态逻辑)。
-     */
+    /** 创建图片容器 (包含加载状态逻辑)。*/
     function createImgContainer(src) {
       const itemContainer = document.createElement('div');
       itemContainer.className = 'gallery-item';
@@ -214,7 +212,7 @@
       img.src = src;
       img.loading = els.gallery.children.length < 3 ? 'eager' : 'lazy';
 
-      // **关键加载状态逻辑**：图片加载完成后，添加 'loaded' 类以显示图片并移除骨架屏动画
+      // 关键加载状态逻辑：图片加载完成后，添加 'loaded' 类以显示图片并移除骨架屏动画
       img.onload = function() {
           itemContainer.classList.add('loaded');
       };
