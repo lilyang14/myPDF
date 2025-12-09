@@ -16,7 +16,7 @@
   <meta http-equiv="Expires" content="0">
 
   <style>
-    /* -------------------- 基础与布局样式 -------------------- */
+    /* ---------- 基础样式 ---------- */
     :root { --bg: #1C1C1C; }
     html, body {
       height: 100%; margin: 0; background: var(--bg); color: #fff;
@@ -26,44 +26,16 @@
     .wrap { padding-top: 60px; min-height: 100vh; box-sizing: border-box; }
     .gallery { width: 100%; max-width: 1200px; margin: 0 auto; }
     
-    /* -------------------- 图片容器与加载态 (Skeleton Loading) -------------------- */
-    .gallery-item {
-      width: 100%;
-      min-height: 400px; /* 骨架屏最小高度 */
-      background-color: #2e2e2e; /* 骨架屏背景色 */
-      position: relative;
-      /* margin-bottom: 0; */ /* 间距已移除 */
-      overflow: hidden;
-      /* border-radius: 0; */ /* 圆角已移除 */
-      /* 初始加载动画 */
-      animation: skeletonPulse 1.5s infinite linear;
-    }
-    /* 隐藏图片，等待加载完成 */
-    .gallery-item img {
+    /* ---------- 图片样式 ---------- */
+    .gallery img {
       width: 100%; height: auto; display: block;
       -webkit-user-drag: none; user-drag: none;
-      opacity: 0; 
-      transition: opacity 0.4s ease-in; /* 平滑淡入 */
+      /* 简单的淡入动画，提升加载体验 */
+      animation: fadeIn 0.5s ease-in;
     }
-    /* 图片加载完成后，移除骨架屏背景和动画，并显示图片 */
-    .gallery-item.loaded {
-      background-color: transparent;
-      animation: none;
-      min-height: auto;
-    }
-    .gallery-item.loaded img {
-      opacity: 1; 
-    }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-    /* 骨架屏脉冲动画 */
-    @keyframes skeletonPulse {
-      0% { background-color: #2e2e2e; }
-      50% { background-color: #383838; }
-      100% { background-color: #2e2e2e; }
-    }
-
-
-    /* -------------------- 网络异常提示 (毛玻璃美化版) -------------------- */
+    /* ---------- 网络异常提示 (毛玻璃版) ---------- */
     .overlay {
       position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
       background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(8px);
@@ -71,61 +43,62 @@
       visibility: hidden; opacity: 0; transition: 0.3s;
     }
     .overlay.show { visibility: visible; opacity: 1; }
-    
     .overlay .card {
       width: 90%; max-width: 380px; padding: 40px 30px;
       background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.4);
       display: flex; flex-direction: column; align-items: center;
     }
+    .overlay-icon { width: 64px; height: 64px; margin-bottom: 20px; fill: #fff; opacity: 0.9; }
+    .overlay h2 { margin: 0 0 10px; font-size: 20px; }
+    .overlay p { margin: 0 0 30px; font-size: 14px; color: rgba(255,255,255,0.6); line-height: 1.6; }
+    
+    /* 按钮 */
     .reload-btn {
       padding: 0 32px; height: 46px; border-radius: 999px;
       background: #FFF; color: #000; font-weight: 600; border: none; cursor: pointer;
-      transition: all 0.2s; box-shadow: 0 4px 12px rgba(255,255,255,0.15); outline: none;
+      transition: all 0.2s; box-shadow: 0 4px 12px rgba(255,255,255,0.15);
     }
-    .reload-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255,255,255,0.3); }
+    .reload-btn:hover { transform: translateY(-2px); background: #f8f8f8; box-shadow: 0 8px 20px rgba(255,255,255,0.3); }
+    .reload-btn:active { transform: translateY(1px); }
 
-    /* -------------------- 响应式设计 -------------------- */
+    /* ---------- 响应式 ---------- */
     @media (min-width: 900px) { .gallery { width: 65vw; } }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <main class="gallery" id="gallery" aria-live="polite"></main>
+    <main class="gallery" id="gallery"></main>
   </div>
 
-  <div class="overlay" id="overlay" role="alertdialog" aria-hidden="true">
+  <div class="overlay" id="overlay">
     <div class="card">
-      <svg class="overlay-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
-      </svg>
+      <svg class="overlay-icon" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
       <h2 id="overlay-msg">加载遇到问题</h2>
       <p>网络连接似乎有些不稳定<br>请检查连接后点击按钮重试</p>
-      <button class="reload-btn" id="reloadBtn" type="button">重新加载页面</button>
+      <button class="reload-btn" id="reloadBtn">重新加载页面</button>
     </div>
   </div>
 
   <script>
-    
-    // ==================== A. 配置常量 (CONFIG) ====================
+    // --- 配置 ---
     const CONFIG = {
-      maxIndex: 5000,
-      stopThreshold: 6,
-      concurrency: 5,
+      maxIndex: 5000,       // 最大编号
+      stopThreshold: 6,     // 连续失败停止阈值
+      concurrency: 5,       // 并发请求数量 (同时查5张)
       exts: ['.png', '.jpg', '.jpeg', '.webp']
     };
 
-    // ==================== B. 状态变量 (STATE) ====================
+    // --- 状态 ---
     const state = {
-      currentIndex: 1,
-      renderIndex: 1,
+      currentIndex: 1,      // 当前正在处理的序号
+      renderIndex: 1,       // 当前可以渲染到界面的序号 (保证顺序)
       failCount: 0,
-      activeRequests: 0,
-      buffer: {},
+      activeRequests: 0,    // 当前活跃的请求数
+      buffer: {},           // 缓存已下载但未显示的图片 { index: imgElement }
       isStopped: false
     };
 
-    // ==================== C. DOM 元素引用 (ELS) ====================
     const els = {
       gallery: document.getElementById('gallery'),
       overlay: document.getElementById('overlay'),
@@ -133,95 +106,82 @@
       btn: document.getElementById('reloadBtn')
     };
 
-    // ==================== D. 初始化与事件监听 ====================
-    window.onload = () => { 
-        window.scrollTo(0,0); 
-        setupProtection();
-        startLoading(); 
-    };
+    // --- 初始化 ---
+    window.onload = () => { window.scrollTo(0,0); startLoading(); };
     els.btn.onclick = () => location.reload();
+    setupProtection();
 
-    // ==================== E. 核心加载逻辑 (并发与顺序控制) ====================
-    
-    /** 启动或维持并发加载进程 */
+    // --- 核心加载逻辑 ---
     function startLoading() {
+      // 只要没停止，且活跃请求没满，就发射新请求
       while (!state.isStopped && state.activeRequests < CONFIG.concurrency) {
         processIndex(state.currentIndex++);
       }
     }
 
-    /** 处理单个序号的图片查找和下载 (异步) */
     async function processIndex(idx) {
       if (idx > CONFIG.maxIndex) return;
       
       state.activeRequests++;
-      let container = null;
+      let img = null;
 
+      // 尝试所有后缀
       for (let ext of CONFIG.exts) {
         const path = `images/work${idx}${ext}`;
         const res = await testImage(path);
         if (res) {
-          // 找到图片后，创建包含骨架屏的容器
-          container = createImgContainer(path);
-          break;
+          img = createImg(path);
+          break; // 找到即止
         }
       }
 
       state.activeRequests--;
-      handleResult(idx, container);
+      handleResult(idx, img);
       
+      // 递归维持并发
       startLoading();
     }
 
-    /** 处理下载结果，并按顺序渲染到DOM */
-    function handleResult(idx, containerElement) {
-      state.buffer[idx] = containerElement; // 存入容器 (或 null)
+    function handleResult(idx, imgElement) {
+      // 1. 存入缓存或标记失败
+      state.buffer[idx] = imgElement; // 没找到就是 null
 
+      // 2. 尝试按顺序渲染 (必须等待 renderIndex 对应的图片处理完)
       while (state.buffer.hasOwnProperty(state.renderIndex)) {
-        const currentContainer = state.buffer[state.renderIndex];
+        const currentImg = state.buffer[state.renderIndex];
         
-        if (currentContainer) {
+        if (currentImg) {
+          // 成功：重置失败计数，上屏
           state.failCount = 0;
-          els.gallery.appendChild(currentContainer);
+          els.gallery.appendChild(currentImg);
         } else {
+          // 失败：增加计数
           state.failCount++;
         }
 
+        // 清理缓存，指针后移
         delete state.buffer[state.renderIndex];
         state.renderIndex++;
 
         // 检查停止条件
         if (state.failCount >= CONFIG.stopThreshold) {
           state.isStopped = true;
-          if (els.gallery.children.length === 0) {
-              showOverlay('未找到任何作品');
-          }
+          // 如果一张图都没刷出来，报错
+          if (els.gallery.children.length === 0) showOverlay();
           return;
         }
       }
     }
 
-    // ==================== F. 辅助功能函数 ====================
-    
-    /** 创建图片容器 (包含加载状态逻辑)。*/
-    function createImgContainer(src) {
-      const itemContainer = document.createElement('div');
-      itemContainer.className = 'gallery-item';
-
+    // --- 辅助函数 ---
+    function createImg(src) {
       const img = document.createElement('img');
       img.src = src;
+      // 这里的策略：前3张 eager (立即)，后面 lazy (懒加载)
       img.loading = els.gallery.children.length < 3 ? 'eager' : 'lazy';
-
-      // 关键加载状态逻辑：图片加载完成后，添加 'loaded' 类以显示图片并移除骨架屏动画
-      img.onload = function() {
-          itemContainer.classList.add('loaded');
-      };
-
-      itemContainer.appendChild(img);
-      return itemContainer;
+      return img;
     }
 
-    /** 测试图片路径是否可访问 */
     function testImage(path) {
       return new Promise(resolve => {
         const img = new Image();
@@ -231,17 +191,16 @@
       });
     }
 
-    /** 显示网络异常覆盖层 */
     function showOverlay(msg) {
       if (msg) els.msg.textContent = msg;
       els.overlay.classList.add('show');
     }
 
-    /** 禁用页面保护功能 */
     function setupProtection() {
+      // 简单保护：禁右键、拖拽
       document.oncontextmenu = document.ondragstart = () => false;
       window.onkeydown = (e) => {
-        if ((e.ctrlKey || e.metaKey) && ['s','u','i'].includes(e.key.toLowerCase())) e.preventDefault();
+        if ((e.ctrlKey || e.metaKey) && ['s','u'].includes(e.key.toLowerCase())) e.preventDefault();
       };
     }
   </script>
