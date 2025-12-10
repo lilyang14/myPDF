@@ -15,47 +15,103 @@
   <meta name="theme-color" content="#1C1C1C">
 
   <style>
-    /* 定义CSS变量 */
+    /* ==========================================
+       基础配置 & 变量定义
+    ========================================== */
     :root {
-      --Backgrounds-Primary: #FFF;
+      --color-white: #FFF;
+      --color-bg-main: #1C1C1C;
+      --opacity-modal-bg: 0.1;
+      --opacity-modal-border: 0.12;
+      --transition-base: 0.2s ease;
+      --transition-fade: 0.5s ease;
     }
 
-    /* 基础重置 */
+    /* ==========================================
+       全局重置 & 基础样式
+    ========================================== */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
-    /* 页面主体样式 */
     body {
-      background-color: #1C1C1C;
+      background-color: var(--color-bg-main);
       padding-top: 60px;
       min-height: 100vh;
+      font-family: "PingFang SC", sans-serif;
     }
 
-    /* 图片容器 */
+    /* ==========================================
+       图片容器 & 加载状态
+    ========================================== */
     .image-container {
       margin: 0 auto;
       width: 100%;
       max-width: 1200px;
+      min-height: calc(100vh - 60px);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
     }
 
-    /* 响应式适配 */
+    .loading-wrapper {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .loading-spinner {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 5px solid var(--color-white);
+      border-top-color: transparent;
+      animation: spin 1s linear infinite;
+    }
+
+    .loading-text {
+      color: var(--color-white);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 20px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ==========================================
+       作品图片样式
+    ========================================== */
+    .work-image {
+      width: 100%;
+      height: auto;
+      display: block;
+      opacity: 0;
+      transition: opacity var(--transition-fade);
+    }
+
+    .work-image.loaded {
+      opacity: 1;
+    }
+
+    /* ==========================================
+       响应式适配
+    ========================================== */
     @media (min-width: 768px) {
       .image-container {
         width: 65%;
       }
     }
 
-    /* 作品图片样式 */
-    .work-image {
-      width: 100%;
-      height: auto;
-      display: block; /* 消除图片底部默认间隙 */
-    }
-
-    /* 弹窗容器 */
+    /* ==========================================
+       异常提示弹窗
+    ========================================== */
     .modal {
       display: none;
       position: fixed;
@@ -69,7 +125,6 @@
       z-index: 9999;
     }
 
-    /* 弹窗内容 - 严格匹配指定样式 */
     .modal-content {
       display: flex;
       padding: 32px 40px 28px 40px;
@@ -77,21 +132,17 @@
       align-items: center;
       gap: 24px;
       border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      background: rgba(255, 255, 255, 0.10);
+      border: 1px solid rgba(255, 255, 255, var(--opacity-modal-border));
+      background: rgba(255, 255, 255, var(--opacity-modal-bg));
     }
 
-    /* 弹窗文案 - 严格匹配指定样式 */
     .modal-text {
-      color: var(--Backgrounds-Primary, #FFF);
-      font-family: "PingFang SC";
+      color: var(--color-white);
       font-size: 14px;
-      font-style: normal;
       font-weight: 500;
-      line-height: 20px; /* 142.857% */
+      line-height: 20px;
     }
 
-    /* 弹窗按钮 - 严格匹配指定样式 */
     .modal-btn {
       display: flex;
       height: 36px;
@@ -100,14 +151,13 @@
       align-items: center;
       gap: 4px;
       border-radius: 8px;
-      background: #FFF;
+      background: var(--color-white);
       border: none;
-      color: #1C1C1C;
-      font-family: "PingFang SC";
+      color: var(--color-bg-main);
       font-size: 14px;
       font-weight: 500;
       cursor: pointer;
-      transition: opacity 0.2s ease;
+      transition: opacity var(--transition-base);
     }
 
     .modal-btn:hover {
@@ -117,106 +167,173 @@
 </head>
 <body>
   <!-- 图片展示容器 -->
-  <div id="imageContainer" class="image-container"></div>
+  <div class="image-container" id="imageContainer">
+    <!-- 加载状态容器 -->
+    <div class="loading-wrapper" id="loadingWrapper">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">加载中</p>
+    </div>
+  </div>
 
   <!-- 异常提示弹窗 -->
-  <div id="modal" class="modal">
+  <div class="modal" id="modal">
     <div class="modal-content">
-      <p id="modalText" class="modal-text"></p>
-      <button id="modalBtn" class="modal-btn"></button>
+      <p class="modal-text" id="modalText"></p>
+      <button class="modal-btn" id="modalBtn"></button>
     </div>
   </div>
 
   <script>
-    // 配置项
-    const MAX_IMAGES = 50; // 最大图片数量限制
-    const imageUrls = []; // 存储有效图片URL
+    // ==========================================
+    // 配置常量（统一管理，便于维护）
+    // ==========================================
+    const CONFIG = {
+      MAX_IMAGES: 50,          // 最大图片数量
+      IMAGE_PREFIX: 'images/work', // 图片路径前缀
+      IMAGE_SUFFIX: '.webp',   // 图片后缀
+      MODAL_TEXT: {
+        NO_CONTENT: '⚠️ 当前暂无内容，请刷新~',
+        NETWORK_ERROR: '⚠️ 网络异常，请重新加载~',
+        IMAGE_ERROR: '⚠️ 图片加载失败，请重新加载~'
+      },
+      MODAL_BTN_TEXT: {
+        REFRESH: '刷新',
+        RELOAD: '重新加载'
+      }
+    };
 
-    // DOM元素获取
-    const imageContainer = document.getElementById('imageContainer');
-    const modal = document.getElementById('modal');
-    const modalText = document.getElementById('modalText');
-    const modalBtn = document.getElementById('modalBtn');
+    // ==========================================
+    // DOM元素缓存（避免重复查询DOM）
+    // ==========================================
+    const DOM = {
+      imageContainer: document.getElementById('imageContainer'),
+      loadingWrapper: document.getElementById('loadingWrapper'),
+      modal: document.getElementById('modal'),
+      modalText: document.getElementById('modalText'),
+      modalBtn: document.getElementById('modalBtn')
+    };
+
+    // 存储有效图片URL
+    let validImageUrls = [];
+
+    // ==========================================
+    // 工具函数（通用功能封装）
+    // ==========================================
+    /**
+     * 显示弹窗提示
+     * @param {string} text 弹窗文案
+     * @param {string} btnText 按钮文字
+     */
+    const showModal = (text, btnText) => {
+      DOM.modalText.textContent = text;
+      DOM.modalBtn.textContent = btnText;
+      DOM.modal.style.display = 'flex';
+      // 绑定按钮点击事件（移除旧事件避免重复绑定）
+      DOM.modalBtn.onclick = () => window.location.reload();
+    };
 
     /**
-     * 收集有效图片（按work1.webp、work2.webp...顺序）
+     * 隐藏加载状态并恢复容器布局
      */
-    async function collectValidImages() {
-      try {
-        for (let i = 1; i <= MAX_IMAGES; i++) {
-          const imgUrl = `images/work${i}.webp`;
-          
-          // 检测图片是否存在（HEAD请求更轻量）
-          const response = await fetch(imgUrl, {
-            method: 'HEAD',
-            cache: 'no-cache'
-          });
+    const hideLoading = () => {
+      DOM.loadingWrapper.style.display = 'none';
+      DOM.imageContainer.style.minHeight = 'auto';
+      DOM.imageContainer.style.justifyContent = 'flex-start';
+    };
 
-          if (response.ok) {
-            imageUrls.push(imgUrl);
+    // ==========================================
+    // 核心业务逻辑
+    // ==========================================
+    /**
+     * 检测图片是否存在（HEAD请求，轻量高效）
+     * @param {string} url 图片URL
+     * @returns {Promise<boolean>} 是否存在
+     */
+    const checkImageExists = async (url) => {
+      try {
+        const response = await fetch(url, {
+          method: 'HEAD',
+          cache: 'no-cache'
+        });
+        return response.ok;
+      } catch (err) {
+        return false;
+      }
+    };
+
+    /**
+     * 收集所有有效图片URL
+     */
+    const collectValidImages = async () => {
+      try {
+        // 批量检测图片，按顺序收集有效URL
+        for (let i = 1; i <= CONFIG.MAX_IMAGES; i++) {
+          const imageUrl = `${CONFIG.IMAGE_PREFIX}${i}${CONFIG.IMAGE_SUFFIX}`;
+          const isExists = await checkImageExists(imageUrl);
+          
+          if (isExists) {
+            validImageUrls.push(imageUrl);
           } else {
-            // 命名连续，某张不存在则后续都不存在，停止检测
+            // 命名连续，某张不存在则后续都不存在，终止检测
             break;
           }
         }
 
-        // 检查是否无图片
-        if (imageUrls.length === 0) {
-          showModal('⚠️ 当前暂无内容，请刷新~', '刷新');
+        // 隐藏加载状态
+        hideLoading();
+
+        // 无有效图片时显示弹窗
+        if (validImageUrls.length === 0) {
+          showModal(CONFIG.MODAL_TEXT.NO_CONTENT, CONFIG.MODAL_BTN_TEXT.REFRESH);
           return;
         }
 
-        // 渲染图片到页面
+        // 渲染图片
         renderImages();
-      } catch (error) {
+      } catch (err) {
         // 网络异常处理
-        showModal('⚠️ 网络异常，请重新加载~', '重新加载');
+        hideLoading();
+        showModal(CONFIG.MODAL_TEXT.NETWORK_ERROR, CONFIG.MODAL_BTN_TEXT.RELOAD);
+        console.error('收集图片失败：', err);
       }
-    }
+    };
 
     /**
-     * 渲染图片（前10张立即加载，后续懒加载）
+     * 渲染图片到页面（前10张立即加载，后续懒加载）
      */
-    function renderImages() {
-      imageUrls.forEach((url, index) => {
+    const renderImages = () => {
+      validImageUrls.forEach((url, index) => {
         const img = document.createElement('img');
+        
+        // 基础属性配置
         img.src = url;
         img.alt = `作品 ${index + 1}`;
         img.className = 'work-image';
         img.draggable = false; // 禁止拖拽
-
-        // 前10张立即加载，后续启用原生懒加载
+        
+        // 懒加载配置（前10张立即加载）
         if (index >= 10) {
           img.loading = 'lazy';
         }
 
-        // 单个图片加载失败处理
+        // 图片加载完成 - 淡入显示
+        img.onload = () => img.classList.add('loaded');
+        
+        // 图片加载失败 - 显示弹窗（防抖：只触发一次）
         img.onerror = () => {
-          showModal('⚠️ 图片加载失败，请重新加载~', '重新加载');
+          if (!DOM.modal.style.display) {
+            showModal(CONFIG.MODAL_TEXT.IMAGE_ERROR, CONFIG.MODAL_BTN_TEXT.RELOAD);
+          }
         };
 
-        imageContainer.appendChild(img);
+        DOM.imageContainer.appendChild(img);
       });
-    }
+    };
 
     /**
-     * 显示提示弹窗
-     * @param {string} text - 弹窗文案
-     * @param {string} btnText - 按钮文字
+     * 图片版权保护（禁止右键/拖拽）
      */
-    function showModal(text, btnText) {
-      modalText.textContent = text;
-      modalBtn.textContent = btnText;
-      modal.style.display = 'flex';
-
-      // 按钮点击刷新页面
-      modalBtn.onclick = () => window.location.reload();
-    }
-
-    /**
-     * 禁止图片右键/拖拽（保护版权）
-     */
-    function protectImages() {
+    const protectImages = () => {
       // 禁止右键点击图片
       document.addEventListener('contextmenu', (e) => {
         if (e.target.tagName === 'IMG') e.preventDefault();
@@ -226,21 +343,32 @@
       document.addEventListener('dragstart', (e) => {
         if (e.target.tagName === 'IMG') e.preventDefault();
       });
-    }
+    };
 
-    // 页面加载完成后滚动到顶部
-    window.addEventListener('load', () => {
-      window.scrollTo({ top: 0, behavior: 'instant' });
-    });
+    // ==========================================
+    // 初始化 & 事件监听
+    // ==========================================
+    const init = () => {
+      // 启用图片保护
+      protectImages();
 
-    // 监听网络断开事件
-    window.addEventListener('offline', () => {
-      showModal('⚠️ 网络异常，请重新加载~', '重新加载');
-    });
+      // 页面加载完成后滚动到顶部
+      window.addEventListener('load', () => {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      });
 
-    // 初始化执行
-    protectImages(); // 启用图片保护
-    collectValidImages(); // 收集并渲染图片
+      // 监听网络离线事件
+      window.addEventListener('offline', () => {
+        hideLoading();
+        showModal(CONFIG.MODAL_TEXT.NETWORK_ERROR, CONFIG.MODAL_BTN_TEXT.RELOAD);
+      });
+
+      // 收集并渲染图片
+      collectValidImages();
+    };
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
