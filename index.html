@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>个人作品集</title>
+  
   <!-- 网站图标配置 -->
   <link rel="apple-touch-icon" sizes="180x180" href="favicon_io/apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon_io/favicon-32x32.png">
@@ -11,308 +12,415 @@
   <link rel="manifest" href="favicon_io/site.webmanifest">
   <link rel="mask-icon" href="favicon_io/safari-pinned-tab.svg" color="#5bbad5">
   <meta name="msapplication-TileColor" content="#da532c">
-  <meta name="theme-color" content="#ffffff">
-  
+  <meta name="theme-color" content="#1C1C1C">
+
   <style>
-    /* 基础重置 */
+    /* 基础变量定义 */
+    :root {
+      --color-white: #FFF;
+      --color-bg-main: #1C1C1C;
+      --transition-fade: 0.5s ease;
+    }
+
+    /* 全局重置 */
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
+    /* 页面主体样式 */
     body {
-      background-color: #1C1C1C;
+      background-color: var(--color-bg-main);
+      padding-top: 60px;
       min-height: 100vh;
-      overflow-x: hidden;
       font-family: "PingFang SC", sans-serif;
     }
 
-    /* 加载动画样式 */
-    .loading-container {
-      position: fixed;
-      top: 0;
-      left: 0;
+    /* 图片容器 - 解决CLS核心：固定占位+绝对定位loading */
+    .image-container {
+      margin: 0 auto;
       width: 100%;
-      height: 100%;
+      max-width: 1200px;
+      min-height: calc(100vh - 60px);
+      position: relative; /* 让loading绝对定位，不占布局空间 */
+    }
+
+    /* 加载状态容器 - 严格匹配样式要求 */
+    .loading-wrapper {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       gap: 20px;
-      z-index: 9999;
-      transition: opacity 0.4s ease-out;
+      z-index: 10;
     }
 
+    /* 环形加载动画 - 5px白色边框 */
     .loading-spinner {
       width: 44px;
       height: 44px;
-      border-radius: 50%;
-      border: 5px solid #FFFFFF;
+      border-radius: 44px;
+      border: 5px solid var(--color-white);
       border-top-color: transparent;
-      animation: spin 1.2s linear infinite;
+      animation: spin 1s linear infinite;
     }
 
+    /* 加载文本样式 */
     .loading-text {
-      color: #FFFFFF;
+      color: var(--color-white);
       font-size: 14px;
       font-weight: 400;
       line-height: 20px;
     }
 
+    /* 环形旋转动画 */
     @keyframes spin {
       to { transform: rotate(360deg); }
     }
 
-    .loading-container.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    /* 图片容器样式 */
-    .images-container {
-      padding-top: 60px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-    }
-
-    .image-wrapper {
-      width: 100%;
-      margin: 0;
-      position: relative;
-    }
-
-    .portfolio-image {
+    /* 作品图片样式 - 淡入+防CLS */
+    .work-image {
       width: 100%;
       height: auto;
-      opacity: 0;
-      transition: opacity 0.6s ease-in-out;
-      max-width: 1200px;
       display: block;
-      margin: 0 auto;
+      opacity: 0;
+      transition: opacity var(--transition-fade);
+      /* 核心：宽高比占位，避免布局偏移 */
+      aspect-ratio: attr(data-aspect-ratio);
+      object-fit: cover;
     }
 
-    .portfolio-image.loaded {
+    /* 图片加载完成淡入 */
+    .work-image.loaded {
       opacity: 1;
     }
 
     /* 响应式适配 */
     @media (min-width: 768px) {
-      .image-wrapper {
+      .image-container {
         width: 65%;
       }
     }
 
-    /* 弹窗样式 */
+    /* 异常弹窗容器 */
     .modal {
+      display: none;
       position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
+
+    /* 弹窗内容 - 严格匹配尺寸/样式 */
+    .modal-content {
       width: 251px;
       height: 140px;
+      opacity: 1;
       border-radius: 20px;
       background: rgba(0, 0, 0, 0.8);
       border: 1px solid rgba(255, 255, 255, 0.2);
       backdrop-filter: blur(18px);
-      display: none;
+      display: flex;
       flex-direction: column;
       justify-content: flex-start;
       align-items: center;
       padding: 32px 40px 28px 40px;
-      z-index: 9998;
     }
 
-    .modal.show {
-      display: flex;
-    }
-
+    /* 弹窗文案样式 */
     .modal-text {
       width: 174px;
       height: 20px;
+      opacity: 1;
       font-size: 14px;
       font-weight: 500;
+      letter-spacing: 0px;
       line-height: 20px;
-      color: #FFFFFF;
+      color: rgba(255, 255, 255, 1);
+      vertical-align: middle;
       text-align: center;
-      margin-bottom: 24px;
     }
 
+    /* 弹窗按钮样式 */
     .modal-btn {
       width: 96px;
       height: 36px;
+      opacity: 1;
       border-radius: 8px;
-      background: #FFFFFF;
+      background: rgba(255, 255, 255, 1);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 10px 20px;
       border: none;
-      cursor: pointer;
+      color: var(--color-bg-main);
       font-size: 14px;
       font-weight: 500;
-      color: #1C1C1C;
-      transition: background 0.2s ease;
+      cursor: pointer;
+      transition: opacity 0.2s ease;
     }
 
     .modal-btn:hover {
-      background: #F5F5F5;
+      opacity: 0.9;
     }
   </style>
 </head>
 <body>
-  <!-- 加载动画容器 -->
-  <div class="loading-container" id="loadingContainer">
-    <div class="loading-spinner"></div>
-    <div class="loading-text">加载中</div>
+  <!-- 图片容器 -->
+  <div class="image-container" id="imageContainer">
+    <!-- 加载状态 -->
+    <div class="loading-wrapper" id="loadingWrapper">
+      <div class="loading-spinner"></div>
+      <p class="loading-text">加载中</p>
+    </div>
   </div>
 
-  <!-- 图片展示容器 -->
-  <div class="images-container" id="imagesContainer"></div>
-
-  <!-- 异常提示弹窗 -->
+  <!-- 异常弹窗 -->
   <div class="modal" id="modal">
-    <div class="modal-text" id="modalText"></div>
-    <button class="modal-btn" id="modalBtn">刷新</button>
+    <div class="modal-content">
+      <p class="modal-text" id="modalText"></p>
+      <button class="modal-btn" id="modalBtn"></button>
+    </div>
   </div>
 
   <script>
-    // 配置常量
-    const MAX_IMAGES = 50;          // 最大图片数量
-    const IMMEDIATE_LOAD = 6;       // 立即加载的图片数量
-    const IMAGE_PATH = 'images/work';// 图片基础路径
-    const IMAGE_EXT = '.webp';      // 图片扩展名
-
-    // DOM 元素获取
-    const loadingContainer = document.getElementById('loadingContainer');
-    const imagesContainer = document.getElementById('imagesContainer');
-    const modal = document.getElementById('modal');
-    const modalText = document.getElementById('modalText');
-    const modalBtn = document.getElementById('modalBtn');
-
-    // 状态管理
-    let totalAttempted = 0;         // 尝试加载的图片总数
-    let loadedCount = 0;            // 成功加载数
-    let failedCount = 0;            // 加载失败数
-    let immediateLoaded = false;    // 前6张是否加载完成
-
-    // 页面加载后滚动到顶部
-    window.addEventListener('load', () => window.scrollTo(0, 0));
-
-    // 禁止右键和拖拽图片
-    document.addEventListener('contextmenu', e => {
-      if (e.target.tagName === 'IMG') e.preventDefault();
-    });
-    document.addEventListener('dragstart', e => {
-      if (e.target.tagName === 'IMG') e.preventDefault();
-    });
-
-    // 创建图片元素
-    function createImage(index) {
-      // 创建包装器（防止布局偏移）
-      const wrapper = document.createElement('div');
-      wrapper.className = 'image-wrapper';
-      wrapper.id = `wrapper-${index}`;
-
-      // 创建图片元素
-      const img = document.createElement('img');
-      img.id = `img-${index}`;
-      img.className = 'portfolio-image';
-      img.src = `${IMAGE_PATH}${index}${IMAGE_EXT}`;
-      img.alt = `作品 ${index}`;
-
-      // 加载成功处理
-      img.addEventListener('load', () => {
-        img.classList.add('loaded');
-        loadedCount++;
-        checkLoadStatus();
-      });
-
-      // 加载失败处理
-      img.addEventListener('error', () => {
-        failedCount++;
-        checkLoadStatus();
-      });
-
-      wrapper.appendChild(img);
-      imagesContainer.appendChild(wrapper);
-      return img;
-    }
-
-    // 检查加载状态
-    function checkLoadStatus() {
-      // 隐藏加载动画（前6张加载完成）
-      if (!immediateLoaded && (loadedCount + failedCount) >= IMMEDIATE_LOAD) {
-        immediateLoaded = true;
-        loadingContainer.classList.add('hidden');
+    // 核心配置常量（统一管理，便于维护）
+    const CONFIG = {
+      MAX_IMAGES: 50,                // 最大图片数量
+      DETECT_MAX_TRY: 5,             // 检测失败最大次数
+      LOAD_IMMEDIATE_COUNT: 6,       // 立即加载的图片数量
+      IMAGE_PREFIX: 'images/work',   // 图片路径前缀
+      IMAGE_SUFFIX: '.webp',         // 图片后缀
+      MODAL_TEXT: {
+        NO_CONTENT: '⚠️ 当前暂无内容，请刷新 ~',
+        NETWORK_ERROR: '⚠️ 网络异常，请重新加载 ~'
+      },
+      MODAL_BTN_TEXT: {
+        REFRESH: '刷新',
+        RELOAD: '重新加载'
       }
+    };
 
-      // 所有图片加载完成后检查弹窗
-      if (totalAttempted === MAX_IMAGES && (loadedCount + failedCount) === MAX_IMAGES) {
-        showModalIfNeeded();
-      }
-    }
+    // DOM元素缓存（避免重复查询）
+    const DOM = {
+      imageContainer: document.getElementById('imageContainer'),
+      loadingWrapper: document.getElementById('loadingWrapper'),
+      modal: document.getElementById('modal'),
+      modalText: document.getElementById('modalText'),
+      modalBtn: document.getElementById('modalBtn')
+    };
 
-    // 弹窗逻辑处理
-    function showModalIfNeeded() {
-      if (totalAttempted === 0) {
-        // 无图片内容
-        modalText.textContent = '⚠️ 当前暂无内容，请刷新 ~';
-        modalBtn.textContent = '刷新';
-        modal.classList.add('show');
-      } else if (loadedCount === 0) {
-        // 全部加载失败
-        modalText.textContent = '⚠️ 网络异常，请重新加载 ~';
-        modalBtn.textContent = '重新加载';
-        modal.classList.add('show');
-      }
-    }
+    // 全局状态
+    const state = {
+      validImageUrls: [],    // 存在的图片URL列表
+      loadedCount: 0,        // 已加载成功的图片数
+      failedCount: 0,        // 加载失败的图片数
+      immediateLoaded: 0     // 前6张已加载完成数
+    };
 
-    // 懒加载设置
-    function setupLazyLoad() {
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            const index = parseInt(entry.target.id.replace('wrapper-', ''));
-            const img = document.getElementById(`img-${index}`);
-            if (img) observer.unobserve(entry.target);
-          }
+    /**
+     * 显示弹窗
+     * @param {string} text 弹窗文案
+     * @param {string} btnText 按钮文字
+     */
+    const showModal = (text, btnText) => {
+      DOM.modalText.textContent = text;
+      DOM.modalBtn.textContent = btnText;
+      DOM.modal.style.display = 'flex';
+      DOM.modalBtn.onclick = () => window.location.reload();
+    };
+
+    /**
+     * 隐藏加载状态
+     */
+    const hideLoading = () => {
+      DOM.loadingWrapper.style.display = 'none';
+      // 恢复容器布局，解决CLS
+      DOM.imageContainer.style.minHeight = 'auto';
+    };
+
+    /**
+     * 检测图片是否存在（HEAD请求，轻量高效）
+     * @param {string} url 图片URL
+     * @returns {Promise<boolean>} 是否存在
+     */
+    const checkImageExists = async (url) => {
+      try {
+        const response = await fetch(url, {
+          method: 'HEAD',
+          cache: 'no-cache',
+          timeout: 3000
         });
-      }, { rootMargin: '300px 0px', threshold: 0.01 });
-
-      // 监听第7张及以后的图片
-      for (let i = IMMEDIATE_LOAD + 1; i <= MAX_IMAGES; i++) {
-        const wrapper = document.getElementById(`wrapper-${i}`);
-        if (wrapper) observer.observe(wrapper);
+        return response.ok;
+      } catch (err) {
+        return false;
       }
-    }
+    };
 
-    // 初始化图片加载
-    function initImages() {
+    /**
+     * 预加载第一张图片（提升LCP）
+     * @param {string} url 第一张图片URL
+     */
+    const preloadFirstImage = (url) => {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = url;
+      document.head.appendChild(link);
+    };
+
+    /**
+     * 渲染单张图片
+     * @param {string} url 图片URL
+     * @param {number} index 图片索引
+     */
+    const renderImage = (url, index) => {
+      const img = document.createElement('img');
+      img.src = url;
+      img.alt = `作品 ${index + 1}`;
+      img.className = 'work-image';
+      img.draggable = false; // 禁止拖拽
+
+      // 前6张立即加载，之后懒加载
+      if (index >= CONFIG.LOAD_IMMEDIATE_COUNT) {
+        img.loading = 'lazy';
+      }
+
+      // 图片加载成功
+      img.onload = () => {
+        img.classList.add('loaded');
+        // 设置宽高比，解决CLS
+        img.setAttribute('data-aspect-ratio', `${img.naturalWidth}/${img.naturalHeight}`);
+        
+        state.loadedCount++;
+        // 统计前6张加载完成数
+        if (index < CONFIG.LOAD_IMMEDIATE_COUNT) {
+          state.immediateLoaded++;
+          // 前6张全部加载完成，隐藏loading
+          if (state.immediateLoaded === CONFIG.LOAD_IMMEDIATE_COUNT) {
+            hideLoading();
+          }
+        }
+      };
+
+      // 图片加载失败（静默处理，仅统计）
+      img.onerror = () => {
+        state.failedCount++;
+        // 移除失败的图片，避免空容器
+        img.remove();
+        
+        // 前6张加载失败也统计，确保loading能隐藏
+        if (index < CONFIG.LOAD_IMMEDIATE_COUNT) {
+          state.immediateLoaded++;
+          if (state.immediateLoaded === CONFIG.LOAD_IMMEDIATE_COUNT) {
+            hideLoading();
+          }
+        }
+      };
+
+      DOM.imageContainer.appendChild(img);
+    };
+
+    /**
+     * 检测所有存在的图片
+     */
+    const detectAllImages = async () => {
+      let failCount = 0;
+      
+      for (let i = 1; i <= CONFIG.MAX_IMAGES; i++) {
+        const imageUrl = `${CONFIG.IMAGE_PREFIX}${i}${CONFIG.IMAGE_SUFFIX}`;
+        const isExists = await checkImageExists(imageUrl);
+
+        if (isExists) {
+          state.validImageUrls.push(imageUrl);
+          failCount = 0; // 重置失败计数
+        } else {
+          failCount++;
+          // 连续失败次数达到阈值，停止检测
+          if (failCount >= CONFIG.DETECT_MAX_TRY) {
+            break;
+          }
+        }
+      }
+
+      // 无有效图片，显示暂无内容弹窗
+      if (state.validImageUrls.length === 0) {
+        hideLoading();
+        showModal(CONFIG.MODAL_TEXT.NO_CONTENT, CONFIG.MODAL_BTN_TEXT.REFRESH);
+        return;
+      }
+
       // 预加载第一张图片（提升LCP）
-      const firstImg = new Image();
-      firstImg.src = `${IMAGE_PATH}1${IMAGE_EXT}`;
+      preloadFirstImage(state.validImageUrls[0]);
 
-      firstImg.addEventListener('load', () => {
-        totalAttempted = MAX_IMAGES;
-        // 立即加载前6张
-        for (let i = 1; i <= IMMEDIATE_LOAD; i++) createImage(i);
-        // 创建剩余图片（懒加载）
-        for (let i = IMMEDIATE_LOAD + 1; i <= MAX_IMAGES; i++) createImage(i);
-        // 设置懒加载
-        setupLazyLoad();
+      // 渲染所有存在的图片
+      state.validImageUrls.forEach((url, index) => {
+        renderImage(url, index);
       });
 
-      // 第一张加载失败（无图片）
-      firstImg.addEventListener('error', () => {
-        totalAttempted = 0;
-        checkLoadStatus();
+      // 监听所有图片加载完成，判断是否需要显示网络异常弹窗
+      const checkAllLoaded = () => {
+        const total = state.validImageUrls.length;
+        const loadedTotal = state.loadedCount + state.failedCount;
+        
+        if (loadedTotal === total) {
+          // 失败数≥10，显示网络异常弹窗
+          if (state.failedCount >= 10) {
+            showModal(CONFIG.MODAL_TEXT.NETWORK_ERROR, CONFIG.MODAL_BTN_TEXT.RELOAD);
+          }
+        }
+      };
+
+      // 监听图片加载状态
+      const observer = new MutationObserver(() => {
+        checkAllLoaded();
       });
-    }
+      observer.observe(DOM.imageContainer, { childList: true, subtree: true });
+    };
 
-    // 弹窗按钮点击事件
-    modalBtn.addEventListener('click', () => window.location.reload());
+    /**
+     * 图片版权保护（禁止右键/拖拽）
+     */
+    const protectImages = () => {
+      // 禁止右键点击图片
+      document.addEventListener('contextmenu', (e) => {
+        if (e.target.tagName === 'IMG') e.preventDefault();
+      });
 
-    // 启动初始化
-    initImages();
+      // 禁止拖拽图片
+      document.addEventListener('dragstart', (e) => {
+        if (e.target.tagName === 'IMG') e.preventDefault();
+      });
+    };
+
+    /**
+     * 初始化
+     */
+    const init = () => {
+      // 版权保护
+      protectImages();
+      
+      // 页面刷新后回到顶部
+      window.addEventListener('load', () => {
+        window.scrollTo({ top: 0, behavior: 'instant' });
+      });
+
+      // 检测并渲染图片
+      detectAllImages();
+    };
+
+    // 页面加载完成后初始化
+    document.addEventListener('DOMContentLoaded', init);
   </script>
 </body>
 </html>
