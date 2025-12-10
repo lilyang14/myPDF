@@ -1,308 +1,241 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>个人作品集</title>
-    <!-- 网站图标配置 -->
-    <link rel="icon" type="image/png" sizes="16x16" href="favicon_io/icon-16x16.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="favicon_io/icon-32x32.png">
-    <link rel="icon" type="image/png" sizes="96x96" href="favicon_io/icon-96x96.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="favicon_io/apple-touch-icon.png">
-    <link rel="manifest" href="favicon_io/manifest.json">
-    <!-- 引入Lottie动画库（加载动效） -->
-    <script src="https://cdn.jsdelivr.net/npm/lottie-web@5.12.2/build/player/lottie.min.js"></script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>个人作品集</title>
+  
+  <!-- 网站图标配置 -->
+  <link rel="apple-touch-icon" sizes="180x180" href="favicon_io/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon_io/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon_io/favicon-16x16.png">
+  <link rel="manifest" href="favicon_io/site.webmanifest">
+  <link rel="mask-icon" href="favicon_io/safari-pinned-tab.svg" color="#5bbad5">
+  <meta name="msapplication-TileColor" content="#da532c">
+  <meta name="theme-color" content="#1C1C1C">
 
-        body {
-            background-color: #1C1C1C;
-            min-height: 100vh;
-        }
+  <style>
+    /* 基础重置 */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-        /* 内容区顶部间距 */
-        .image-container {
-            padding-top: 60px;
-            max-width: 100%;
-            margin: 0 auto;
-        }
+    /* 页面主体样式 */
+    body {
+      background-color: #1C1C1C;
+      padding-top: 60px;
+      min-height: 100vh;
+    }
 
-        /* 图片样式 - 单列居中、无间距 */
-        .work-image {
-            display: block;
-            margin: 0 auto;
-            width: 65%;
-            max-width: 1200px;
-            height: auto;
-            transition: opacity 0.3s ease;
-            opacity: 0;
-        }
+    /* 图片容器 */
+    .image-container {
+      margin: 0 auto;
+      width: 100%;
+      max-width: 1200px;
+    }
 
-        .work-image.loaded {
-            opacity: 1;
-        }
+    /* 响应式适配 */
+    @media (min-width: 768px) {
+      .image-container {
+        width: 65%;
+      }
+    }
 
-        /* 响应式适配 - 移动端 */
-        @media (max-width: 768px) {
-            .work-image {
-                width: 100%;
-            }
-        }
+    /* 作品图片样式 */
+    .work-image {
+      width: 100%;
+      height: auto;
+      display: block; /* 消除图片底部默认间隙 */
+    }
 
-        /* 加载动画容器 */
-        .loading-container {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 100;
-        }
+    /* 弹窗容器 */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
 
-        /* 异常弹窗样式 */
-        .error-modal {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: #2D2D2D;
-            color: #FFFFFF;
-            padding: 30px 40px;
-            border-radius: 12px;
-            text-align: center;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            z-index: 200;
-            display: none;
-        }
+    /* 弹窗内容 */
+    .modal-content {
+      display: flex;
+      padding: 32px 40px 28px 40px;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      border-radius: 20px;
+      border: 1px solid hsba(0, 0%, 100%, 0.12);
+      background: hsba(0, 0%, 100%, 0.10);
+    }
 
-        .error-modal.active {
-            display: block;
-            animation: fadeIn 0.3s ease;
-        }
+    /* 弹窗文案 */
+    .modal-text {
+      color: #FFF;
+      font-family: "PingFang SC", sans-serif;
+      font-size: 14px;
+      font-style: normal;
+      font-weight: 500;
+      line-height: 20px;
+    }
 
-        .error-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            color: #FF6B6B;
-        }
+    /* 弹窗按钮 */
+    .modal-btn {
+      display: flex;
+      height: 36px;
+      padding: 10px 20px;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      border-radius: 8px;
+      background: hsba(0, 0%, 100%, 1);
+      border: none;
+      color: #1C1C1C;
+      font-family: "PingFang SC", sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s ease;
+    }
 
-        .error-text {
-            font-size: 18px;
-            margin-bottom: 24px;
-            line-height: 1.5;
-        }
-
-        .error-btn {
-            padding: 10px 24px;
-            background: #4A90E2;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-
-        .error-btn:hover {
-            background: #357ABD;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translate(-50%, -45%); }
-            to { opacity: 1; transform: translate(-50%, -50%); }
-        }
-    </style>
+    .modal-btn:hover {
+      opacity: 0.9;
+    }
+  </style>
 </head>
 <body>
-    <!-- 加载动画容器 -->
-    <div class="loading-container" id="loadingContainer"></div>
+  <!-- 图片展示容器 -->
+  <div id="imageContainer" class="image-container"></div>
 
-    <!-- 图片容器 -->
-    <div class="image-container" id="imageContainer"></div>
-
-    <!-- 网络异常弹窗 -->
-    <div class="error-modal" id="networkError">
-        <div class="error-icon">⚠️</div>
-        <div class="error-text">网络异常，请重新加载~</div>
-        <button class="error-btn" id="reloadBtn">重新加载</button>
+  <!-- 异常提示弹窗 -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <p id="modalText" class="modal-text"></p>
+      <button id="modalBtn" class="modal-btn"></button>
     </div>
+  </div>
 
-    <!-- 内容为空弹窗 -->
-    <div class="error-modal" id="emptyError">
-        <div class="error-icon">⚠️</div>
-        <div class="error-text">当前暂无内容，请刷新~</div>
-        <button class="error-btn" id="refreshBtn">刷新</button>
-    </div>
+  <script>
+    // 配置项
+    const MAX_IMAGES = 50; // 最大图片数量限制
+    const imageUrls = []; // 存储有效图片URL
 
-    <script>
-        // 全局配置
-        const CONFIG = {
-            maxImages: 50, // 最大图片数量
-            initialLoad: 10, // 初始加载图片数量
-            imagePath: 'images/work', // 图片路径前缀
-            imageExt: 'webp' // 图片扩展名
+    // DOM元素获取
+    const imageContainer = document.getElementById('imageContainer');
+    const modal = document.getElementById('modal');
+    const modalText = document.getElementById('modalText');
+    const modalBtn = document.getElementById('modalBtn');
+
+    /**
+     * 收集有效图片（按work1.webp、work2.webp...顺序）
+     */
+    async function collectValidImages() {
+      try {
+        for (let i = 1; i <= MAX_IMAGES; i++) {
+          const imgUrl = `images/work${i}.webp`;
+          
+          // 检测图片是否存在（HEAD请求更轻量）
+          const response = await fetch(imgUrl, {
+            method: 'HEAD',
+            cache: 'no-cache'
+          });
+
+          if (response.ok) {
+            imageUrls.push(imgUrl);
+          } else {
+            // 命名连续，某张不存在则后续都不存在，停止检测
+            break;
+          }
+        }
+
+        // 检查是否无图片
+        if (imageUrls.length === 0) {
+          showModal('⚠️ 当前暂无内容，请刷新~', '刷新');
+          return;
+        }
+
+        // 渲染图片到页面
+        renderImages();
+      } catch (error) {
+        // 网络异常处理
+        showModal('⚠️ 网络异常，请重新加载~', '重新加载');
+      }
+    }
+
+    /**
+     * 渲染图片（前10张立即加载，后续懒加载）
+     */
+    function renderImages() {
+      imageUrls.forEach((url, index) => {
+        const img = document.createElement('img');
+        img.src = url;
+        img.alt = `作品 ${index + 1}`;
+        img.className = 'work-image';
+        img.draggable = false; // 禁止拖拽
+
+        // 前10张立即加载，后续启用原生懒加载
+        if (index >= 10) {
+          img.loading = 'lazy';
+        }
+
+        // 单个图片加载失败处理
+        img.onerror = () => {
+          showModal('⚠️ 图片加载失败，请重新加载~', '重新加载');
         };
 
-        // DOM元素
-        const imageContainer = document.getElementById('imageContainer');
-        const loadingContainer = document.getElementById('loadingContainer');
-        const networkError = document.getElementById('networkError');
-        const emptyError = document.getElementById('emptyError');
-        const reloadBtn = document.getElementById('reloadBtn');
-        const refreshBtn = document.getElementById('refreshBtn');
+        imageContainer.appendChild(img);
+      });
+    }
 
-        // 初始化加载动画
-        const initLoadingAnimation = () => {
-            lottie.loadAnimation({
-                container: loadingContainer,
-                renderer: 'svg',
-                loop: true,
-                autoplay: true,
-                path: 'https://lottie.host/dlrqA3fa65/dlrqA3fa65.json' // 参考加载动效
-            });
-        };
+    /**
+     * 显示提示弹窗
+     * @param {string} text - 弹窗文案
+     * @param {string} btnText - 按钮文字
+     */
+    function showModal(text, btnText) {
+      modalText.textContent = text;
+      modalBtn.textContent = btnText;
+      modal.style.display = 'flex';
 
-        // 创建图片元素
-        const createImageElement = (index) => {
-            const img = document.createElement('img');
-            img.className = 'work-image';
-            img.alt = `作品 ${index}`;
-            img.dataset.src = `${CONFIG.imagePath}${index}.${CONFIG.imageExt}`; // 懒加载数据源
-            img.oncontextmenu = () => false; // 禁止右键菜单
-            img.ondragstart = () => false; // 禁止拖拽
-            return img;
-        };
+      // 按钮点击刷新页面
+      modalBtn.onclick = () => window.location.reload();
+    }
 
-        // 加载图片（懒加载）
-        const loadImage = (imgElement) => {
-            return new Promise((resolve, reject) => {
-                imgElement.onload = () => {
-                    imgElement.classList.add('loaded');
-                    resolve();
-                };
-                imgElement.onerror = (err) => {
-                    // 区分网络错误和文件不存在
-                    if (err.type === 'error' && err.target.naturalWidth === 0) {
-                        reject('fileNotFound');
-                    } else {
-                        reject('networkError');
-                    }
-                };
-                imgElement.src = imgElement.dataset.src;
-            });
-        };
+    /**
+     * 禁止图片右键/拖拽（保护版权）
+     */
+    function protectImages() {
+      // 禁止右键点击图片
+      document.addEventListener('contextmenu', (e) => {
+        if (e.target.tagName === 'IMG') e.preventDefault();
+      });
 
-        // 初始化懒加载
-        const initLazyLoad = () => {
-            if ('IntersectionObserver' in window) {
-                const observer = new IntersectionObserver((entries) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            const img = entry.target;
-                            if (img.dataset.src && !img.src) {
-                                loadImage(img).catch(err => {
-                                    if (err === 'networkError') showNetworkError();
-                                });
-                            }
-                            observer.unobserve(img);
-                        }
-                    });
-                }, { rootMargin: '200px 0px' });
+      // 禁止拖拽图片
+      document.addEventListener('dragstart', (e) => {
+        if (e.target.tagName === 'IMG') e.preventDefault();
+      });
+    }
 
-                // 观察所有未加载的图片
-                document.querySelectorAll('.work-image:not([src])').forEach(img => {
-                    observer.observe(img);
-                });
-            }
-        };
+    // 页面加载完成后滚动到顶部
+    window.addEventListener('load', () => {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+    });
 
-        // 批量创建图片并加载
-        const renderImages = async () => {
-            let hasImages = false;
-            const imagePromises = [];
+    // 监听网络断开事件
+    window.addEventListener('offline', () => {
+      showModal('⚠️ 网络异常，请重新加载~', '重新加载');
+    });
 
-            // 循环创建所有图片元素（1~maxImages）
-            for (let i = 1; i <= CONFIG.maxImages; i++) {
-                const img = createImageElement(i);
-                imageContainer.appendChild(img);
-
-                // 初始加载前N张，其余等待懒加载
-                if (i <= CONFIG.initialLoad) {
-                    imagePromises.push(
-                        loadImage(img)
-                            .then(() => { hasImages = true; })
-                            .catch(err => {
-                                if (err === 'networkError') throw err;
-                            })
-                    );
-                }
-            }
-
-            try {
-                // 等待初始图片加载完成
-                await Promise.allSettled(imagePromises);
-                loadingContainer.style.display = 'none';
-
-                // 初始化懒加载
-                initLazyLoad();
-
-                // 检查是否有有效图片
-                if (!hasImages && document.querySelectorAll('.work-image.loaded').length === 0) {
-                    showEmptyError();
-                }
-            } catch (err) {
-                if (err === 'networkError') {
-                    loadingContainer.style.display = 'none';
-                    showNetworkError();
-                }
-            }
-        };
-
-        // 显示网络异常弹窗
-        const showNetworkError = () => {
-            networkError.classList.add('active');
-        };
-
-        // 显示内容为空弹窗
-        const showEmptyError = () => {
-            emptyError.classList.add('active');
-        };
-
-        // 重新加载图片
-        const reloadImages = () => {
-            networkError.classList.remove('active');
-            emptyError.classList.remove('active');
-            loadingContainer.style.display = 'block';
-            
-            // 清空现有图片
-            imageContainer.innerHTML = '';
-            
-            // 重新渲染
-            renderImages();
-        };
-
-        // 绑定事件
-        const bindEvents = () => {
-            // 重新加载按钮
-            reloadBtn.addEventListener('click', reloadImages);
-            // 刷新按钮
-            refreshBtn.addEventListener('click', reloadImages);
-            // 页面加载完成后滚动到顶部
-            window.addEventListener('load', () => window.scrollTo(0, 0));
-        };
-
-        // 初始化应用
-        const initApp = () => {
-            initLoadingAnimation();
-            bindEvents();
-            renderImages();
-        };
-
-        // 启动应用
-        initApp();
-    </script>
+    // 初始化执行
+    protectImages(); // 启用图片保护
+    collectValidImages(); // 收集并渲染图片
+  </script>
 </body>
 </html>
