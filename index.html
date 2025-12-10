@@ -15,6 +15,11 @@
   <meta name="theme-color" content="#1C1C1C">
 
   <style>
+    /* 定义CSS变量 */
+    :root {
+      --Backgrounds-Primary: #FFF;
+    }
+
     /* 基础重置 */
     * {
       margin: 0;
@@ -64,7 +69,7 @@
       z-index: 9999;
     }
 
-    /* 弹窗内容 */
+    /* 弹窗内容 - 严格匹配指定样式 */
     .modal-content {
       display: flex;
       padding: 32px 40px 28px 40px;
@@ -72,21 +77,21 @@
       align-items: center;
       gap: 24px;
       border-radius: 20px;
-      border: 1px solid hsba(0, 0%, 100%, 0.12);
-      background: hsba(0, 0%, 100%, 0.10);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.10);
     }
 
-    /* 弹窗文案 */
+    /* 弹窗文案 - 严格匹配指定样式 */
     .modal-text {
-      color: #FFF;
-      font-family: "PingFang SC", sans-serif;
+      color: var(--Backgrounds-Primary, #FFF);
+      font-family: "PingFang SC";
       font-size: 14px;
       font-style: normal;
       font-weight: 500;
-      line-height: 20px;
+      line-height: 20px; /* 142.857% */
     }
 
-    /* 弹窗按钮 */
+    /* 弹窗按钮 - 严格匹配指定样式 */
     .modal-btn {
       display: flex;
       height: 36px;
@@ -95,10 +100,10 @@
       align-items: center;
       gap: 4px;
       border-radius: 8px;
-      background: hsba(0, 0%, 100%, 1);
+      background: #FFF;
       border: none;
       color: #1C1C1C;
-      font-family: "PingFang SC", sans-serif;
+      font-family: "PingFang SC";
       font-size: 14px;
       font-weight: 500;
       cursor: pointer;
